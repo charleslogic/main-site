@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Site</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    nav { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    nav .spacer { flex: 1; }
+    #user-email-display { font-size: 0.9rem; color: #555; }
+    section { margin-bottom: 2rem; padding: 1rem; border-radius: 6px; }
+    #public-content { background: #f9f9f9; border: 1px solid #ddd; }
+    #auth-panel { border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem; max-width: 320px; }
+    #auth-panel h2 { margin-top: 0; font-size: 1rem; }
+    #auth-panel input { display: block; width: 100%; box-sizing: border-box; margin-bottom: 0.75rem; padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 4px; }
+    .btn-row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+    button { cursor: pointer; padding: 0.4rem 1rem; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
+    button:hover { background: #f5f5f5; }
+    .btn-google { border-color: #4285f4; color: #4285f4; width: 100%; }
+    .divider { text-align: center; color: #aaa; font-size: 0.85rem; margin: 0.75rem 0; }
+    #auth-message { font-size: 0.85rem; color: #c00; min-height: 1.2em; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <strong>My Site</strong>
+    <span class="spacer"></span>
+    <span id="user-email-display" hidden></span>
+    <button id="btn-logout" hidden>Sign out</button>
+  </nav>
+
+  <section id="public-content">
+    <h1>Welcome</h1>
+    <p>Public content visible to everyone.</p>
+  </section>
+
+  <section>
+    <h2>Apps</h2>
+    <ul>
+      <li><a href="https://vercel1-nam.vercel.app/">NAM! — Nature Around Me</a></li>
+      <li><a href="https://bikepath.vercel.app/">Bike Path: Arcade Edition</a></li>
+    </ul>
+  </section>
+
+  <div id="auth-panel">
+    <h2>Sign in</h2>
+    <button class="btn-google" id="btn-google">Sign in with Google</button>
+    <div class="divider">or</div>
+    <input type="email" id="input-email" placeholder="Email" autocomplete="email" />
+    <input type="password" id="input-password" placeholder="Password" autocomplete="current-password" />
+    <div class="btn-row">
+      <button id="btn-signin">Sign in</button>
+      <button id="btn-signup">Create account</button>
+    </div>
+    <div id="auth-message"></div>
+  </div>
+
+  <!-- Protected slots — empty until server returns content for valid tokens -->
+  <div id="member-slot"></div>
+  <div id="admin-slot"></div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const SUPABASE_URL      = 'https://nfvxmkknkxysjksyhbek.supabase.co'
+    const SUPABASE_ANON_KEY = 'sb_publishable_Lju5epgXoT5HFOoyZdjGYw_ksPesDaB'
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+    async function loadProtectedContent(session) {
+      const headers = { Authorization: `Bearer ${session.access_token}` }
+
+      const [memberRes, adminRes] = await Promise.all([
+        fetch('/api/member-content', { headers }),
+        fetch('/api/admin-content',  { headers })
+      ])
+
+      if (memberRes.ok) {
+        document.getElementById('member-slot').innerHTML = await memberRes.text()
+      }
+      if (adminRes.ok) {
+        document.getElementById('admin-slot').innerHTML = await adminRes.text()
+      }
+    }
+
+    function clearProtectedContent() {
+      document.getElementById('member-slot').innerHTML = ''
+      document.getElementById('admin-slot').innerHTML  = ''
+    }
+
+    function render(session) {
+      const loggedIn = !!session?.user
+      document.getElementById('auth-panel').hidden          = loggedIn
+      document.getElementById('btn-logout').hidden          = !loggedIn
+      document.getElementById('user-email-display').hidden  = !loggedIn
+      document.getElementById('auth-message').textContent   = ''
+
+      if (loggedIn) {
+        document.getElementById('user-email-display').textContent = session.user.email
+        loadProtectedContent(session)
+      } else {
+        clearProtectedContent()
+      }
+    }
+
+    const { data: { session } } = await supabase.auth.getSession()
+    render(session)
+
+    supabase.auth.onAuthStateChange((_event, session) => render(session))
+
+    const redirectTo = window.location.origin + window.location.pathname
+
+    document.getElementById('btn-google').addEventListener('click', () =>
+      supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, queryParams: { prompt: 'select_account' } } })
+    )
+
+    document.getElementById('btn-signin').addEventListener('click', async () => {
+      const email    = document.getElementById('input-email').value.trim()
+      const password = document.getElementById('input-password').value
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) document.getElementById('auth-message').textContent = error.message
+    })
+
+    document.getElementById('btn-signup').addEventListener('click', async () => {
+      const email    = document.getElementById('input-email').value.trim()
+      const password = document.getElementById('input-password').value
+      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } })
+      if (error) {
+        document.getElementById('auth-message').textContent = error.message
+      } else {
+        document.getElementById('auth-message').style.color = '#080'
+        document.getElementById('auth-message').textContent = 'Check your email to confirm your account.'
+      }
+    })
+
+    document.getElementById('btn-logout').addEventListener('click', () =>
+      supabase.auth.signOut()
+    )
+  </script>
+
+</body>
+</html>
