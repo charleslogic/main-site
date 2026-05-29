@@ -3,460 +3,403 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CharlesLogic | System Dashboard</title>
+  <title>CharlesLogic</title>
   <style>
     :root {
-      --bg:     #0f172a;
-      --bg2:    #1e293b;
-      --bg3:    #334155;
-      --text:   #f8fafc;
-      --text2:  #94a3b8;
-      --text3:  #cbd5e1;
-      --border: #334155;
-      --accent: #fbbf24;
-      --green:  #4ade80;
-      --danger: #f87171;
-      --shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+      --bg:      #09090b;
+      --surface: #18181b;
+      --border:  #27272a;
+      --border2: #3f3f46;
+      --text:    #fafafa;
+      --text2:   #a1a1aa;
+      --text3:   #71717a;
+      --accent:  #7c3aed;
+      --accent2: #8b5cf6;
+      --glow:    rgba(124,58,237,0.12);
     }
     [data-theme="light"] {
-      --bg:     #f8fafc;
-      --bg2:    #f1f5f9;
-      --bg3:    #e2e8f0;
-      --text:   #0f172a;
-      --text2:  #475569;
-      --text3:  #334155;
-      --border: #cbd5e1;
-      --accent: #d97706;
-      --green:  #16a34a;
-      --danger: #dc2626;
-      --shadow: 0 4px 12px rgba(0,0,0,0.1);
+      --bg:      #fafafa;
+      --surface: #ffffff;
+      --border:  #e4e4e7;
+      --border2: #d4d4d8;
+      --text:    #09090b;
+      --text2:   #52525b;
+      --text3:   #a1a1aa;
+      --accent:  #7c3aed;
+      --accent2: #6d28d9;
+      --glow:    rgba(124,58,237,0.06);
     }
 
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      margin: 0;
-      padding-top: 52px;
-      font-family: 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      padding-top: 60px;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ── TOP BAR ─────────────────────────────────────────────────────────── */
     #top-bar {
       position: fixed;
       top: 0; left: 0; right: 0;
-      z-index: 1000;
-      background: rgba(13,17,23,0.97);
+      z-index: 100;
+      height: 60px;
       border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--bg) 82%, transparent);
     }
-    [data-theme="light"] #top-bar { background: rgba(248,250,252,0.97); }
-
     #top-bar-inner {
-      max-width: 1200px;
+      max-width: 960px;
       margin: 0 auto;
-      padding: 0 20px;
-      height: 52px;
+      padding: 0 24px;
+      height: 100%;
       display: flex;
       align-items: center;
-    }
-    #auth-status-label {
-      flex: 1;
-      font-family: 'Courier New', monospace;
-      font-size: 10px;
-      color: var(--text2);
-      letter-spacing: 1px;
+      gap: 12px;
     }
     #site-brand {
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      font-weight: bold;
-      color: var(--accent);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
       text-decoration: none;
-      letter-spacing: 1px;
+      letter-spacing: -0.3px;
+      flex-shrink: 0;
     }
-    #top-bar-right {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-    #theme-toggle {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--text2);
-      border-radius: 6px;
-      padding: 4px 8px;
-      cursor: pointer;
-      font-size: 13px;
-      line-height: 1;
-    }
-    #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    #site-brand span { color: var(--accent2); }
+    .bar-spacer { flex: 1; }
 
-    /* ── USER MENU ───────────────────────────────────────────────────────── */
-    #user-menu-wrap { position: relative; }
-    #user-icon-btn {
+    #theme-toggle {
+      width: 32px; height: 32px;
       background: none;
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 6px 10px;
+      color: var(--text2);
       cursor: pointer;
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      letter-spacing: 1px;
-      transition: border-color 0.15s;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: border-color 0.15s, color 0.15s;
     }
-    #user-icon-btn:hover { border-color: var(--accent); }
+    #theme-toggle:hover { border-color: var(--border2); color: var(--text); }
+
+    /* ── USER MENU ───────────────────────────────────────────────────────── */
+    #user-menu-wrap { position: relative; }
+
+    #user-icon-btn {
+      height: 32px;
+      padding: 0 12px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text2);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 7px;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    #user-icon-btn:hover { border-color: var(--border2); color: var(--text); background: var(--surface); }
 
     #auth-dropdown {
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      width: 280px;
-      background: var(--bg2);
+      width: 288px;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 20px;
-      box-shadow: var(--shadow);
-      z-index: 2000;
+      padding: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.03);
+      z-index: 200;
     }
+    [data-theme="light"] #auth-dropdown { box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
 
-    /* logged-in view */
-    #dropdown-user-info {
-      text-align: center;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 14px;
-    }
-    #dropdown-session-label {
-      font-family: 'Courier New', monospace;
-      font-size: 0.7rem;
-      color: var(--green);
+    .dropdown-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 4px;
     }
-    #dropdown-user-email { font-size: 0.85rem; color: var(--text2); word-break: break-all; }
+    #dropdown-user-info {
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    #dropdown-user-email { font-size: 13px; color: var(--text2); word-break: break-all; }
+
     #btn-logout {
       width: 100%;
-      padding: 9px;
+      padding: 8px;
       background: none;
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text2);
       cursor: pointer;
       font-family: inherit;
-      font-size: 0.85rem;
+      font-size: 13px;
       transition: border-color 0.15s, color 0.15s;
     }
-    #btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+    #btn-logout:hover { border-color: #ef4444; color: #ef4444; }
 
-    /* login form */
     #btn-google {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
       width: 100%;
-      padding: 10px;
+      padding: 9px;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
       cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 600;
-      font-family: inherit;
-      margin-bottom: 14px;
+      font-size: 13px; font-weight: 500; font-family: inherit;
+      margin-bottom: 12px;
       transition: border-color 0.15s;
     }
-    #btn-google:hover { border-color: #4285f4; }
+    #btn-google:hover { border-color: var(--border2); }
 
     .auth-divider {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
-      color: var(--text2);
-      font-size: 0.75rem;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+      color: var(--text3); font-size: 11px;
     }
     .auth-divider::before, .auth-divider::after {
       content: ''; flex: 1; height: 1px; background: var(--border);
     }
 
     .auth-input {
-      display: block;
-      width: 100%;
-      padding: 9px 10px;
+      display: block; width: 100%;
+      padding: 8px 10px;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
-      font-size: 0.85rem;
-      font-family: inherit;
-      margin-bottom: 10px;
+      font-size: 13px; font-family: inherit;
+      margin-bottom: 8px;
+      outline: none;
+      transition: border-color 0.15s;
     }
-    .auth-input:focus { outline: none; border-color: var(--accent); }
+    .auth-input:focus { border-color: var(--accent2); }
 
     #btn-send-code, #btn-verify-code {
-      width: 100%;
-      padding: 10px;
+      width: 100%; padding: 9px;
       background: var(--accent);
-      color: #0f172a;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
+      color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+      transition: background 0.15s;
     }
-    #btn-send-code:hover, #btn-verify-code:hover { opacity: 0.85; }
+    #btn-send-code:hover, #btn-verify-code:hover { background: var(--accent2); }
     #btn-send-code:disabled, #btn-verify-code:disabled { opacity: 0.5; cursor: default; }
+
     #btn-otp-back {
-      background: none; border: none; color: var(--text2);
-      font-size: 0.75rem; cursor: pointer; text-decoration: underline;
+      background: none; border: none; color: var(--text3);
+      font-size: 12px; cursor: pointer; text-decoration: underline;
       font-family: inherit; margin-top: 8px; padding: 0;
     }
-    #otp-sent-msg { font-size: 0.8rem; color: var(--text2); margin-bottom: 10px; }
-    #auth-message { font-size: 0.8rem; color: var(--danger); min-height: 1.2em; margin-top: 8px; }
+    #otp-sent-msg { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+    #auth-message { font-size: 12px; color: #f87171; min-height: 1.2em; margin-top: 6px; }
 
     [hidden] { display: none !important; }
 
-    /* ── CONTAINER ───────────────────────────────────────────────────────── */
-    .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px 20px; }
+    /* ── MAIN ────────────────────────────────────────────────────────────── */
+    .container { max-width: 960px; margin: 0 auto; padding: 72px 24px 48px; }
 
     /* ── HERO ────────────────────────────────────────────────────────────── */
-    .hero { text-align: center; margin-bottom: 28px; }
-    h1.main-title {
-      font-size: clamp(2.4rem, 12vw, 4.2rem);
-      margin: 0 0 6px;
-      color: var(--accent);
+    .hero { text-align: center; margin-bottom: 64px; }
+    .hero h1 {
+      font-size: clamp(3rem, 9vw, 5.5rem);
       font-weight: 800;
+      letter-spacing: -2.5px;
       line-height: 1;
+      color: var(--text);
+      margin-bottom: 18px;
     }
-    .tagline {
-      font-size: clamp(0.7rem, 3vw, 0.85rem);
-      color: var(--text2);
+    .hero h1 span { color: var(--accent2); }
+    .hero p { font-size: 1rem; color: var(--text2); line-height: 1.6; }
+
+    /* ── APPS ────────────────────────────────────────────────────────────── */
+    .section-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
       text-transform: uppercase;
-      letter-spacing: 4px;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
     }
-
-    /* ── TERMINAL ────────────────────────────────────────────────────────── */
-    .terminal {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px 20px;
-      margin-bottom: 30px;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      line-height: 1.65;
-      box-shadow: var(--shadow);
-    }
-    .prompt   { color: var(--green); }
-    .log-ok   { color: var(--green); font-weight: bold; }
-    .log-warn { color: var(--text2); }
-    .log-line { color: var(--text3); }
-    .cursor-blink {
-      display: inline-block; width: 8px; height: 1em;
-      background: var(--accent); animation: blink 1s infinite; vertical-align: middle;
-    }
-    @keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
-
-    /* ── SECTION LABELS ──────────────────────────────────────────────────── */
-    .section-label {
-      font-family: 'Courier New', monospace;
-      font-size: 0.68rem;
-      color: var(--accent);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin: 28px 0 10px;
-      opacity: 0.8;
-    }
-
-    /* ── NAV GRID ────────────────────────────────────────────────────────── */
     .nav-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 12px;
-      margin-bottom: 4px;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 10px;
     }
     .nav-card {
       display: block;
       text-decoration: none;
-      color: var(--text);
-      background: var(--bg2);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 18px;
-      transition: transform 0.2s, border-color 0.2s;
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
     }
     .nav-card:hover {
       border-color: var(--accent);
-      transform: translateY(-3px);
+      box-shadow: 0 0 0 1px var(--accent), 0 6px 24px var(--glow);
+      transform: translateY(-2px);
     }
+    .nav-card-icon { font-size: 1.5rem; display: block; margin-bottom: 10px; }
     .nav-card-title {
-      font-family: 'Courier New', monospace;
-      font-size: 1rem;
-      color: var(--accent);
-      margin: 0 0 5px;
-      font-weight: bold;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 5px;
     }
     .nav-card-desc {
       font-size: 0.8rem;
       color: var(--text2);
-      margin: 0 0 12px;
-      line-height: 1.4;
+      line-height: 1.5;
+      margin-bottom: 14px;
     }
     .tags { display: flex; flex-wrap: wrap; gap: 5px; }
     .tag {
-      font-family: 'Courier New', monospace;
       font-size: 0.62rem;
-      padding: 2px 7px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      color: var(--text2);
-      letter-spacing: 1px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
-    .tag-green  { border-color: var(--green);  color: var(--green);  }
-    .tag-blue   { border-color: #60a5fa;        color: #60a5fa;       }
-    .tag-purple { border-color: #a78bfa;        color: #a78bfa;       }
-    .tag-amber  { border-color: var(--accent);  color: var(--accent); }
+    .tag-violet { border: 1px solid rgba(139,92,246,0.4); color: #a78bfa; background: rgba(139,92,246,0.08); }
+    .tag-green  { border: 1px solid rgba(52,211,153,0.4); color: #6ee7b7; background: rgba(52,211,153,0.08); }
+    .tag-blue   { border: 1px solid rgba(96,165,250,0.4); color: #93c5fd; background: rgba(96,165,250,0.08); }
+    .tag-amber  { border: 1px solid rgba(251,191,36,0.4); color: #fcd34d; background: rgba(251,191,36,0.08); }
+
+    /* ── PROTECTED SLOTS ─────────────────────────────────────────────────── */
+    #member-slot, #admin-slot { margin-top: 10px; }
 
     /* ── FOOTER ──────────────────────────────────────────────────────────── */
     .footer {
-      margin-top: 48px;
+      margin-top: 80px;
       text-align: center;
-      font-family: 'Courier New', monospace;
-      font-size: 0.65rem;
-      color: var(--text2);
-      opacity: 0.4;
-      padding-bottom: 20px;
+      font-size: 12px;
+      color: var(--text3);
+      padding-bottom: 24px;
     }
 
-    @media (max-width: 600px) {
-      #auth-status-label { display: none; }
-      #auth-dropdown { width: calc(100vw - 40px); right: -10px; }
+    @media (max-width: 520px) {
+      .hero h1 { letter-spacing: -1.5px; }
+      #auth-dropdown { width: calc(100vw - 32px); right: -8px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- TOP BAR -->
   <div id="top-bar">
     <div id="top-bar-inner">
-      <span id="auth-status-label">[GUEST_SYNC]</span>
-      <a href="/" id="site-brand">CharlesLogic</a>
-      <div id="top-bar-right">
-        <button id="theme-toggle" title="Toggle theme">◐</button>
-        <div id="user-menu-wrap">
-          <button id="user-icon-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-            </svg>
-            <span id="user-btn-label">[LOGIN]</span>
-          </button>
+      <a href="/" id="site-brand">Charles<span>Logic</span></a>
+      <div class="bar-spacer"></div>
+      <button id="theme-toggle" title="Toggle theme">◐</button>
+      <div id="user-menu-wrap">
+        <button id="user-icon-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          <span id="user-btn-label">Sign in</span>
+        </button>
 
-          <div id="auth-dropdown" hidden>
-            <!-- Logged-out: login form -->
-            <div id="dropdown-login">
-              <button id="btn-google">
-                <svg width="16" height="16" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-                  <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-                  <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-                  <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-                </svg>
-                Continue with Google
-              </button>
-              <div class="auth-divider">or</div>
-              <div id="otp-email-step">
-                <input type="email" id="input-email" class="auth-input" placeholder="Email address" autocomplete="email">
-                <button id="btn-send-code">Send code</button>
-              </div>
-              <div id="otp-code-step" hidden>
-                <div id="otp-sent-msg">Code sent — check your email</div>
-                <input type="text" id="input-code" class="auth-input" placeholder="8-digit code" maxlength="8" inputmode="numeric" autocomplete="one-time-code">
-                <button id="btn-verify-code">Sign in</button>
-                <br><button id="btn-otp-back">Use different email</button>
-              </div>
-              <div id="auth-message"></div>
+        <div id="auth-dropdown" hidden>
+          <div id="dropdown-login">
+            <button id="btn-google">
+              <svg width="15" height="15" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+              </svg>
+              Continue with Google
+            </button>
+            <div class="auth-divider">or</div>
+            <div id="otp-email-step">
+              <input type="email" id="input-email" class="auth-input" placeholder="Email address" autocomplete="email">
+              <button id="btn-send-code">Send code</button>
             </div>
+            <div id="otp-code-step" hidden>
+              <div id="otp-sent-msg">Code sent — check your email</div>
+              <input type="text" id="input-code" class="auth-input" placeholder="8-digit code" maxlength="8" inputmode="numeric" autocomplete="one-time-code">
+              <button id="btn-verify-code">Sign in</button>
+              <br><button id="btn-otp-back">Use different email</button>
+            </div>
+            <div id="auth-message"></div>
+          </div>
 
-            <!-- Logged-in: user info + sign out -->
-            <div id="dropdown-user" hidden>
-              <div id="dropdown-user-info">
-                <div id="dropdown-session-label">[SESSION_ACTIVE]</div>
-                <div id="dropdown-user-email"></div>
-              </div>
-              <button id="btn-logout">Sign out</button>
+          <div id="dropdown-user" hidden>
+            <div id="dropdown-user-info">
+              <div class="dropdown-label">Signed in as</div>
+              <div id="dropdown-user-email"></div>
             </div>
+            <button id="btn-logout">Sign out</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MAIN -->
   <div class="container">
-
     <div class="hero">
-      <h1 class="main-title">CharlesLogic</h1>
-      <div class="tagline">Digital Media &amp; Infrastructure</div>
+      <h1>Charles<span>Logic</span></h1>
+      <p>Personal apps &amp; projects — Arlington, TX.</p>
     </div>
 
-    <div class="terminal">
-      <div><span class="prompt">admin@charleslogic:~$</span> cl-status --summary</div>
-      <div class="log-line"><span class="log-ok">[OK]</span> Node: ARLINGTON_TX</div>
-      <div class="log-line" id="terminal-auth-line"><span class="log-warn">[!]</span> AUTH_LEVEL: ANONYMOUS</div>
-      <div style="margin-top:8px;"><span class="prompt">admin@charleslogic:~$</span> <span class="cursor-blink"></span></div>
-    </div>
-
-    <div class="section-label">▸ apps</div>
+    <div class="section-header">Apps</div>
     <div class="nav-grid">
       <a href="https://nam.charleslogic.com/" class="nav-card">
-        <div class="nav-card-title">./nam</div>
-        <div class="nav-card-desc">v2.3.0 · Wildlife observations near you.</div>
+        <span class="nav-card-icon">🌿</span>
+        <div class="nav-card-title">NAM!</div>
+        <div class="nav-card-desc">Wildlife observations near you. Identify and log nature sightings.</div>
         <div class="tags">
-          <span class="tag tag-green">NATURE</span>
-          <span class="tag tag-blue">MAPS</span>
+          <span class="tag tag-green">Nature</span>
+          <span class="tag tag-blue">Maps</span>
         </div>
       </a>
       <a href="https://bike.charleslogic.com/" class="nav-card">
-        <div class="nav-card-title">./bike_path</div>
-        <div class="nav-card-desc">v2.9 · Dodge cones, collect energy, survive.</div>
+        <span class="nav-card-icon">🚴</span>
+        <div class="nav-card-title">Bike Path</div>
+        <div class="nav-card-desc">Arcade game — dodge cones, collect energy, survive the road.</div>
         <div class="tags">
-          <span class="tag tag-amber">ARCADE</span>
-          <span class="tag tag-purple">LEADERBOARD</span>
+          <span class="tag tag-amber">Arcade</span>
+          <span class="tag tag-violet">Leaderboard</span>
         </div>
       </a>
       <a href="https://tv.charleslogic.com/" class="nav-card">
-        <div class="nav-card-title">./trailview</div>
-        <div class="nav-card-desc">v1.0 · GPS activity map from Strava.</div>
+        <span class="nav-card-icon">⛰️</span>
+        <div class="nav-card-title">TrailView</div>
+        <div class="nav-card-desc">GPS activity map from Strava with heatmap and elevation charts.</div>
         <div class="tags">
-          <span class="tag tag-green">FITNESS</span>
-          <span class="tag tag-blue">MAPS</span>
+          <span class="tag tag-green">Fitness</span>
+          <span class="tag tag-blue">Maps</span>
         </div>
       </a>
       <a href="https://habit.charleslogic.com/" class="nav-card">
-        <div class="nav-card-title">./habit</div>
-        <div class="nav-card-desc">Habit tracking &amp; streaks.</div>
+        <span class="nav-card-icon">✅</span>
+        <div class="nav-card-title">Habit</div>
+        <div class="nav-card-desc">Habit tracking and streaks.</div>
         <div class="tags">
-          <span class="tag tag-amber">PRODUCTIVITY</span>
+          <span class="tag tag-violet">Productivity</span>
         </div>
       </a>
     </div>
 
-    <!-- Protected slots — injected by API on login -->
     <div id="member-slot"></div>
     <div id="admin-slot"></div>
 
-    <div class="footer">CharlesLogic · Arlington, TX · charleslogic.com</div>
+    <div class="footer">CharlesLogic · Arlington, TX</div>
   </div>
 
   <script type="module">
@@ -466,7 +409,6 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_Lju5epgXoT5HFOoyZdjGYw_ksPesDaB'
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-    // Theme
     const savedTheme = localStorage.getItem('cl-theme') || 'dark'
     document.documentElement.dataset.theme = savedTheme
     document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -475,7 +417,6 @@
       localStorage.setItem('cl-theme', next)
     })
 
-    // Dropdown toggle
     const dropdownEl = document.getElementById('auth-dropdown')
     document.getElementById('user-icon-btn').addEventListener('click', e => {
       e.stopPropagation()
@@ -516,15 +457,7 @@
     function render(session) {
       const loggedIn = !!session?.user
       const email    = session?.user?.email || ''
-
-      document.getElementById('auth-status-label').textContent = loggedIn ? '[USER_ACTIVE]' : '[GUEST_SYNC]'
-      document.getElementById('auth-status-label').style.color = loggedIn ? 'var(--green)' : ''
-      document.getElementById('user-btn-label').textContent    = loggedIn ? email.split('@')[0].toUpperCase() : '[LOGIN]'
-
-      document.getElementById('terminal-auth-line').innerHTML = loggedIn
-        ? `<span class="log-ok">[OK]</span> SESSION: ACTIVE [${email}]`
-        : `<span class="log-warn">[!]</span> AUTH_LEVEL: ANONYMOUS`
-
+      document.getElementById('user-btn-label').textContent = loggedIn ? email.split('@')[0] : 'Sign in'
       document.getElementById('dropdown-login').hidden = loggedIn
       document.getElementById('dropdown-user').hidden  = !loggedIn
       if (loggedIn) {

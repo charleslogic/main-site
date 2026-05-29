@@ -18,11 +18,10 @@ module.exports = async function handler(req, res) {
 
   res.setHeader('Content-Type', 'text/html')
   res.send(`
-    <div style="margin-top:16px;">
-      <div style="font-family:'Courier New',monospace;font-size:0.68rem;color:#4ade80;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;opacity:0.8;">▸ admin</div>
-      <section style="background:#1e293b;border:1px solid #4ade80;padding:18px;border-radius:10px;color:#cbd5e1;font-family:'Segoe UI',Roboto,sans-serif;">
-        <div style="font-family:'Courier New',monospace;font-size:0.85rem;color:#4ade80;margin-bottom:6px;">[ADMIN_ACCESS]</div>
-        <p style="margin:0;font-size:0.9rem;">Admin-only content. Never in page source for anyone without a verified admin token.</p>
+    <div style="margin-top:10px;">
+      <div style="font-size:11px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Admin</div>
+      <section style="background:#18181b;border:1px solid #3f3f46;padding:20px;border-radius:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+        <p style="margin:0;font-size:0.9rem;color:#a1a1aa;">Admin-only content. Never in page source for anyone without a verified admin token.</p>
       </section>
     </div>
   `)
