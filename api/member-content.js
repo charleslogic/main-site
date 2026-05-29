@@ -16,9 +16,12 @@ module.exports = async function handler(req, res) {
 
   res.setHeader('Content-Type', 'text/html')
   res.send(`
-    <section style="background:#f0f7ff;border:1px solid #c0d8f0;padding:1rem;border-radius:6px;margin-bottom:2rem">
-      <h2>Member Area</h2>
-      <p>Welcome, ${email}. This content was never in the page source — it was fetched after your token was verified server-side.</p>
-    </section>
+    <div style="margin-top:28px;">
+      <div style="font-family:'Courier New',monospace;font-size:0.68rem;color:#fbbf24;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;opacity:0.8;">▸ member</div>
+      <section style="background:#1e293b;border:1px solid #334155;padding:18px;border-radius:10px;color:#cbd5e1;font-family:'Segoe UI',Roboto,sans-serif;">
+        <div style="font-family:'Courier New',monospace;font-size:0.85rem;color:#4ade80;margin-bottom:6px;">[ACCESS_GRANTED]</div>
+        <p style="margin:0;font-size:0.9rem;">Welcome, ${email}. This content was fetched server-side after token verification.</p>
+      </section>
+    </div>
   `)
 }
