@@ -14,11 +14,15 @@
     #auth-panel { border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem; max-width: 320px; }
     #auth-panel h2 { margin-top: 0; font-size: 1rem; }
     #auth-panel input { display: block; width: 100%; box-sizing: border-box; margin-bottom: 0.75rem; padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 4px; }
-    .btn-row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
     button { cursor: pointer; padding: 0.4rem 1rem; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
     button:hover { background: #f5f5f5; }
-    .btn-google { border-color: #4285f4; color: #4285f4; width: 100%; }
+    .btn-google { border-color: #4285f4; color: #4285f4; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; }
     .divider { text-align: center; color: #aaa; font-size: 0.85rem; margin: 0.75rem 0; }
+    #btn-send-code, #btn-verify-code { width: 100%; box-sizing: border-box; margin-bottom: 0.5rem; background: #4285f4; color: #fff; border-color: #4285f4; }
+    #btn-send-code:hover, #btn-verify-code:hover { background: #3367d6; }
+    #btn-send-code:disabled, #btn-verify-code:disabled { opacity: 0.5; cursor: default; }
+    #btn-otp-back { background: none; border: none; color: #888; font-size: 0.8rem; cursor: pointer; text-decoration: underline; padding: 0; margin-top: 0.25rem; }
+    #otp-sent-msg { font-size: 0.85rem; color: #555; margin-bottom: 0.5rem; }
     #auth-message { font-size: 0.85rem; color: #c00; min-height: 1.2em; }
     [hidden] { display: none !important; }
   </style>
@@ -47,13 +51,25 @@
 
   <div id="auth-panel">
     <h2>Sign in</h2>
-    <button class="btn-google" id="btn-google">Sign in with Google</button>
+    <button class="btn-google" id="btn-google">
+      <svg width="16" height="16" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+        <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
     <div class="divider">or</div>
-    <input type="email" id="input-email" placeholder="Email" autocomplete="email" />
-    <input type="password" id="input-password" placeholder="Password" autocomplete="current-password" />
-    <div class="btn-row">
-      <button id="btn-signin">Sign in</button>
-      <button id="btn-signup">Create account</button>
+    <div id="otp-email-step">
+      <input type="email" id="input-email" placeholder="Email" autocomplete="email" />
+      <button id="btn-send-code">Send code</button>
+    </div>
+    <div id="otp-code-step" hidden>
+      <div id="otp-sent-msg">Code sent — check your email</div>
+      <input type="text" id="input-code" placeholder="8-digit code" maxlength="8" inputmode="numeric" autocomplete="one-time-code" />
+      <button id="btn-verify-code">Sign in</button>
+      <br><button id="btn-otp-back">Use different email</button>
     </div>
     <div id="auth-message"></div>
   </div>
@@ -91,18 +107,29 @@
       document.getElementById('admin-slot').innerHTML  = ''
     }
 
+    function resetOtpState() {
+      document.getElementById('otp-email-step').hidden = false
+      document.getElementById('otp-code-step').hidden  = true
+      document.getElementById('input-email').value     = ''
+      document.getElementById('input-code').value      = ''
+      document.getElementById('btn-send-code').disabled    = false
+      document.getElementById('btn-send-code').textContent = 'Send code'
+      otpEmail = ''
+    }
+
     function render(session) {
       const loggedIn = !!session?.user
-      document.getElementById('auth-panel').hidden          = loggedIn
-      document.getElementById('btn-logout').hidden          = !loggedIn
-      document.getElementById('user-email-display').hidden  = !loggedIn
-      document.getElementById('auth-message').textContent   = ''
+      document.getElementById('auth-panel').hidden         = loggedIn
+      document.getElementById('btn-logout').hidden         = !loggedIn
+      document.getElementById('user-email-display').hidden = !loggedIn
+      document.getElementById('auth-message').textContent  = ''
 
       if (loggedIn) {
         document.getElementById('user-email-display').textContent = session.user.email
         loadProtectedContent(session)
       } else {
         clearProtectedContent()
+        resetOtpState()
       }
     }
 
@@ -117,23 +144,53 @@
       supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, queryParams: { prompt: 'select_account' } } })
     )
 
-    document.getElementById('btn-signin').addEventListener('click', async () => {
-      const email    = document.getElementById('input-email').value.trim()
-      const password = document.getElementById('input-password').value
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) document.getElementById('auth-message').textContent = error.message
-    })
+    let otpEmail = ''
 
-    document.getElementById('btn-signup').addEventListener('click', async () => {
-      const email    = document.getElementById('input-email').value.trim()
-      const password = document.getElementById('input-password').value
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } })
+    document.getElementById('btn-send-code').addEventListener('click', async () => {
+      const email = document.getElementById('input-email').value.trim()
+      if (!email) return
+      const btn = document.getElementById('btn-send-code')
+      btn.disabled = true; btn.textContent = 'Sending…'
+      document.getElementById('auth-message').textContent = ''
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
       if (error) {
         document.getElementById('auth-message').textContent = error.message
-      } else {
-        document.getElementById('auth-message').style.color = '#080'
-        document.getElementById('auth-message').textContent = 'Check your email to confirm your account.'
+        btn.disabled = false; btn.textContent = 'Send code'
+        return
       }
+      otpEmail = email
+      document.getElementById('otp-email-step').hidden = true
+      document.getElementById('otp-code-step').hidden  = false
+      document.getElementById('input-code').focus()
+    })
+
+    document.getElementById('input-email').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-send-code').click()
+    })
+
+    document.getElementById('btn-verify-code').addEventListener('click', async () => {
+      const code = document.getElementById('input-code').value.trim()
+      if (!code) return
+      const btn = document.getElementById('btn-verify-code')
+      btn.disabled = true; btn.textContent = 'Verifying…'
+      document.getElementById('auth-message').textContent = ''
+      const { error } = await supabase.auth.verifyOtp({ email: otpEmail, token: code, type: 'email' })
+      if (error) {
+        document.getElementById('auth-message').textContent = 'Invalid or expired code. Try again.'
+        btn.disabled = false; btn.textContent = 'Sign in'
+      }
+      // success: onAuthStateChange fires and render() handles the rest
+    })
+
+    document.getElementById('input-code').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-verify-code').click()
+    })
+
+    document.getElementById('btn-otp-back').addEventListener('click', () => {
+      document.getElementById('otp-code-step').hidden  = true
+      document.getElementById('otp-email-step').hidden = false
+      document.getElementById('input-code').value = ''
+      document.getElementById('auth-message').textContent = ''
     })
 
     document.getElementById('btn-logout').addEventListener('click', () =>
