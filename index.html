@@ -250,12 +250,33 @@
       position: relative;
       overflow: hidden;
       transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      cursor: pointer;
     }
     .nav-card:hover {
       border-color: var(--accent);
       box-shadow: 0 0 0 1px var(--accent), 0 6px 24px var(--glow);
       transform: translateY(-2px);
     }
+    .card-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      z-index: 1;
+    }
+    .card-guide {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text3);
+      text-decoration: none;
+      margin-top: 10px;
+      position: relative;
+      z-index: 2;
+      transition: color 0.15s;
+    }
+    .card-guide:hover { color: var(--accent2); }
     .nav-card-icon { font-size: 1.5rem; display: block; margin-bottom: 10px; }
     .nav-card-title {
       font-size: 0.95rem;
@@ -361,7 +382,8 @@
 
     <div class="section-header">Apps</div>
     <div class="nav-grid">
-      <a href="https://nam.charleslogic.com/" class="nav-card">
+      <div class="nav-card">
+        <a class="card-overlay" href="https://nam.charleslogic.com/" aria-label="Open NAM!"></a>
         <span class="nav-card-icon">🌿</span>
         <div class="nav-card-title">NAM!</div>
         <div class="nav-card-desc">Recent wildlife sightings from eBird &amp; iNaturalist, Amy's birding life list, and birds on her needs list spotted nearby.</div>
@@ -369,8 +391,10 @@
           <span class="tag tag-green">Nature</span>
           <span class="tag tag-blue">Maps</span>
         </div>
-      </a>
-      <a href="https://bike.charleslogic.com/" class="nav-card">
+        <a class="card-guide" href="https://nam.charleslogic.com/nam-guide.html" target="_blank" rel="noopener">📖 Field Guide ↗</a>
+      </div>
+      <div class="nav-card">
+        <a class="card-overlay" href="https://bike.charleslogic.com/" aria-label="Open Bike Path"></a>
         <span class="nav-card-icon">🚴</span>
         <div class="nav-card-title">Bike Path</div>
         <div class="nav-card-desc">Arcade game — dodge cones, collect energy, survive the road.</div>
@@ -378,8 +402,10 @@
           <span class="tag tag-amber">Arcade</span>
           <span class="tag tag-violet">Leaderboard</span>
         </div>
-      </a>
-      <a href="https://tv.charleslogic.com/" class="nav-card">
+        <a class="card-guide" href="https://bike.charleslogic.com/bikepath-guide.html" target="_blank" rel="noopener">📖 Rider's Manual ↗</a>
+      </div>
+      <div class="nav-card">
+        <a class="card-overlay" href="https://tv.charleslogic.com/" aria-label="Open TrailView"></a>
         <span class="nav-card-icon">⛰️</span>
         <div class="nav-card-title">TrailView</div>
         <div class="nav-card-desc">GPS activity map from Strava with heatmap and elevation charts.</div>
@@ -387,15 +413,18 @@
           <span class="tag tag-green">Fitness</span>
           <span class="tag tag-blue">Maps</span>
         </div>
-      </a>
-      <a href="https://habit.charleslogic.com/" class="nav-card">
+        <a class="card-guide" href="https://tv.charleslogic.com/trailview-guide.html" target="_blank" rel="noopener">📖 User Guide ↗</a>
+      </div>
+      <div class="nav-card">
+        <a class="card-overlay" href="https://habit.charleslogic.com/" aria-label="Open HabitLog"></a>
         <span class="nav-card-icon">✅</span>
-        <div class="nav-card-title">Habit</div>
-        <div class="nav-card-desc">Habit tracking and streaks.</div>
+        <div class="nav-card-title">HabitLog</div>
+        <div class="nav-card-desc">Track habits and vices — streaks, mood, GPS log.</div>
         <div class="tags">
           <span class="tag tag-violet">Productivity</span>
         </div>
-      </a>
+        <a class="card-guide" href="https://habit.charleslogic.com/hab-guide.html" target="_blank" rel="noopener">📖 User Guide ↗</a>
+      </div>
     </div>
 
     <div id="member-slot"></div>
