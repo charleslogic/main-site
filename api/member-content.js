@@ -12,7 +12,9 @@ module.exports = async function handler(req, res) {
   const { data: { user }, error } = await supabase.auth.getUser(token)
   if (error || !user) return res.status(401).end()
 
-  const email = user.email.replace(/</g, '&lt;')
+  const email = String(user.email)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
   res.setHeader('Content-Type', 'text/html')
   res.send(`
