@@ -12,9 +12,9 @@ Code fixes shipped in commit `<fill>`.
 
 - Both API functions **validate the JWT** server-side via `supabase.auth.getUser(token)`
   before returning anything, and **query no tables** — so there is no RLS dependency.
-- **Admin gate is sound**: `ADMIN_EMAILS.includes(user.email)` runs *after* JWT verification.
-  OTP and Google both prove email ownership, so only the real owner of an admin address can
-  pass; non-admins get a fail-closed 403.
+- **Admin gate is sound**: keyed on the admin's immutable Supabase user id (`ADMIN_USER_ID`
+  env var) and checked *after* JWT verification; non-admins get a fail-closed 403. See the
+  updated note below — this replaced an email allowlist that had drifted.
 - APIs return bare status codes (`401`/`403`) — no `error.message` leakage.
 - OAuth uses standard `signInWithOAuth` + `redirectTo` — no `state=user-id` antipattern.
 
