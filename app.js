@@ -1,7 +1,10 @@
 // CharlesLogic main site — auth + protected content loader.
 // Extracted from an inline <script type="module"> so the page can run under a
 // strict Content-Security-Policy (no 'unsafe-inline' scripts).
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.2/+esm'
+// The Supabase library is self-hosted (supabase.umd.js, a classic script loaded
+// before this module) rather than imported cross-origin from a CDN — a blocked or
+// flaky CDN would otherwise break sign-in on load.
+const { createClient } = window.supabase
 
 const SUPABASE_URL      = 'https://nfvxmkknkxysjksyhbek.supabase.co'
 const SUPABASE_ANON_KEY = 'sb_publishable_Lju5epgXoT5HFOoyZdjGYw_ksPesDaB'
