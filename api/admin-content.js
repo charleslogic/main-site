@@ -1,8 +1,11 @@
 const { createClient } = require('@supabase/supabase-js')
 
-// Temporary — replace with a Supabase profiles table role check when ready.
-// Stored lowercase; the request email is lowercased before comparison.
-const ADMIN_EMAILS = ['charles76012@gmail.com']
+// Admin is identified by the immutable Supabase user id (UUID), set as
+// ADMIN_USER_ID in the Vercel env — same pattern as TrailView's TV_ADMIN_USER_ID.
+// This is unspoofable and can't drift the way an email allowlist can (a stray
+// or unverified email address could otherwise match). Fail-closed: if the env
+// var is unset, no one is admin.
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -16,11 +19,7 @@ module.exports = async function handler(req, res) {
   const { data: { user }, error } = await supabase.auth.getUser(token)
   if (error || !user) return res.status(401).end()
 
-  // Admin requires a CONFIRMED email that is on the allowlist. Requiring
-  // email_confirmed_at blocks any unverified signup from matching the admin
-  // address on the shared Supabase project.
-  const email = (user.email || '').toLowerCase()
-  if (!user.email_confirmed_at || !ADMIN_EMAILS.includes(email)) {
+  if (!ADMIN_USER_ID || user.id !== ADMIN_USER_ID) {
     return res.status(403).end()
   }
 

@@ -36,7 +36,7 @@ See trailview `CLAUDE.md` for the full dual-auth guide, TDZ gotcha, and Supabase
 
 Injected into `#member-slot` and `#admin-slot` by the API after login. The API verifies the Supabase JWT server-side — content is never in the page source.
 
-`admin-content.js` uses a hardcoded `ADMIN_EMAILS` array (temporary — replace with a Supabase profiles role check when needed).
+`admin-content.js` gates on the admin's immutable Supabase user id via the `ADMIN_USER_ID` env var (same pattern as TrailView's `TV_ADMIN_USER_ID`) — not an email allowlist, which can drift or match an unverified address. Fail-closed: if `ADMIN_USER_ID` is unset, no one is admin.
 
 ## Environment Variables
 
@@ -44,6 +44,7 @@ Injected into `#member-slot` and `#admin-slot` by the API after login. The API v
 |----------|-------|
 | `SUPABASE_URL` | `https://nfvxmkknkxysjksyhbek.supabase.co` |
 | `SUPABASE_ANON_KEY` | (from Supabase dashboard) |
+| `ADMIN_USER_ID` | Supabase UUID of the admin user (Auth → Users → copy User UID) — gates `admin-content.js` |
 
 ## Apps Listed
 

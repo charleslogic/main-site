@@ -66,7 +66,10 @@ if markup were ever injected, `script-src 'self'` blocks inline `<script>` / `on
 
 ## Notes / not done
 
-- `ADMIN_EMAILS` is a hardcoded array (CLAUDE.md flags this as temporary — replace with a
-  Supabase `profiles` role check when convenient). Functionally fine and fail-closed today.
+- **Admin gate (updated 2026-05-29):** now keyed on the admin's immutable Supabase user id
+  via `ADMIN_USER_ID` env var (TrailView `TV_ADMIN_USER_ID` pattern), replacing the email
+  allowlist. Email allowlists drift (a stray `…@yahoo.com` entry was matching) and can match
+  unverified addresses on the shared project. Fail-closed: unset env var → no admin.
+  **Requires `ADMIN_USER_ID` set in Vercel** = the gmail account's Auth UUID.
 - `shouldCreateUser: true` (open signup) is intentional; new users only see the placeholder
   "Members" slot, and the admin slot stays email-gated.
