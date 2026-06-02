@@ -1,7 +1,7 @@
 const CACHE = 'cl-main-v1';
 const PRECACHE = ['/', '/supabase.umd.js', '/app.js', '/cl-icon.svg',
     '/nam-icon.svg', '/bike-icon.svg', '/trailview-icon.svg',
-    '/hab-icon.svg', '/hobby-icon.svg', '/wm-icon.svg'];
+    '/hab-icon.svg', '/hobby-icon.svg', '/wm-icon.svg', '/tracklog-icon.svg'];
 
 self.addEventListener('install', e => {
     e.waitUntil(
