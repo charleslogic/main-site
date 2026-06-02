@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="#0d1b2a"/>
+  <!-- Speed lines -->
+  <line x1="8" y1="44" x2="22" y2="44" stroke="#3498db" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="5" y1="52" x2="20" y2="52" stroke="#3498db" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+  <line x1="8" y1="60" x2="18" y2="60" stroke="#3498db" stroke-width="1.5" stroke-linecap="round" opacity="0.25"/>
+  <!-- Rear wheel -->
+  <circle cx="32" cy="63" r="18" fill="none" stroke="#3498db" stroke-width="4.5"/>
+  <circle cx="32" cy="63" r="5" fill="#3498db"/>
+  <!-- Front wheel -->
+  <circle cx="70" cy="63" r="18" fill="none" stroke="#3498db" stroke-width="4.5"/>
+  <circle cx="70" cy="63" r="5" fill="#3498db"/>
+  <!-- Frame: chain stays + seat tube base at (50,49) -->
+  <polyline points="32,63 50,49 70,63"
+            stroke="white" stroke-width="3.5" fill="none" stroke-linejoin="round"/>
+  <!-- Seat tube -->
+  <line x1="50" y1="49" x2="48" y2="33" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Top tube to head tube -->
+  <line x1="48" y1="33" x2="69" y2="41" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Seat -->
+  <line x1="42" y1="30" x2="54" y2="30" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Fork + handlebar -->
+  <line x1="69" y1="41" x2="73" y2="33" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="68" y1="31" x2="78" y2="31" stroke="white" stroke-width="4" stroke-linecap="round"/>
+</svg>

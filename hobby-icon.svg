@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="#0D0D12"/>
+  <!-- H left pillar -->
+  <rect x="20" y="24" width="16" height="52" rx="8" fill="#00C896"/>
+  <!-- H right pillar -->
+  <rect x="64" y="24" width="16" height="52" rx="8" fill="#00C896"/>
+  <!-- H crossbar -->
+  <rect x="20" y="42" width="60" height="16" rx="8" fill="#00C896"/>
+  <!-- Small star accent top-right -->
+  <polygon points="81,14 83,21 90,21 84,25 86,32 81,28 76,32 78,25 72,21 79,21"
+           fill="#00C896" opacity="0.5"/>
+</svg>
