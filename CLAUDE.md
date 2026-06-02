@@ -9,6 +9,10 @@ Static `index.html` + two Vercel serverless API functions. No build step.
 ```
 main-site/
 ├── index.html              — single-page app (auth, app grid, member/admin slots)
+├── manifest.json           — PWA manifest
+├── sw.js                   — service worker (precaches shell + all app SVG icons)
+├── cl-icon.svg             — site icon (violet C on black)
+├── *-icon.svg              — local copies of each app's SVG icon (served same-origin)
 ├── api/
 │   ├── member-content.js   — GET /api/member-content (requires valid Supabase JWT)
 │   └── admin-content.js    — GET /api/admin-content (requires admin email)
@@ -18,7 +22,7 @@ main-site/
 ## Design
 
 Clean modern dark — zinc palette (`#09090b` bg, `#18181b` cards), violet accent (`#7c3aed`).
-App cards with emoji icons, pill tags, violet glow on hover. Light/dark theme toggle persists in `localStorage`.
+App cards with SVG `<img>` icons (local copies, not cross-origin), pill tags, violet glow on hover. Light/dark theme toggle persists in `localStorage`. Icon files are copied from each app's repo and committed here so cards load instantly without depending on other deployments.
 
 The previous terminal/hacker aesthetic was replaced — it felt like a costume for a single-page app launcher.
 
@@ -48,14 +52,19 @@ Injected into `#member-slot` and `#admin-slot` by the API after login. The API v
 
 ## Apps Listed
 
-All four apps are public (no login required to see the cards):
+All apps are public (no login required to see the cards):
 
-| App | URL | Description |
-|-----|-----|-------------|
-| NAM! | `nam.charleslogic.com` | Recent sightings from eBird & iNaturalist; Amy's birding life list and needs list |
-| Bike Path | `bike.charleslogic.com` | Arcade game — dodge cones, leaderboard |
-| TrailView | `tv.charleslogic.com` | GPS activity map from Strava |
-| Habit | `habit.charleslogic.com` | Habit tracking and streaks |
+| App | URL | Icon file |
+|-----|-----|-----------|
+| NAM! | `nam.charleslogic.com` | `nam-icon.svg` |
+| Bike Path | `bike.charleslogic.com` | `bike-icon.svg` |
+| TrailView | `tv.charleslogic.com` | `trailview-icon.svg` |
+| HabitLog | `habit.charleslogic.com` | `hab-icon.svg` |
+| HobbyLog | `hobby.charleslogic.com` | `hobby-icon.svg` |
+| TrackLog | `tracks.charleslogic.com` | `tracklog-icon.svg` |
+| Worry Meter | `wm.charleslogic.com` | `wm-icon.svg` |
+
+**When adding a new app:** copy its SVG icon into this repo, add an `<img class="nav-card-icon">` card in `index.html`, and add the icon path to the `PRECACHE` list in `sw.js`.
 
 ## Deploy Workflow
 
