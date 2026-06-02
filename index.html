@@ -2,10 +2,16 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CharlesLogic">
+  <meta name="theme-color" content="#7c3aed">
   <title>CharlesLogic</title>
-  <link rel="icon" type="image/png" href="cl-icon.png">
-  <link rel="apple-touch-icon" href="cl-icon.png">
+  <link rel="icon" type="image/svg+xml" href="cl-icon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="cl-icon.svg">
+  <link rel="manifest" href="/manifest.json">
   <style>
     :root {
       --bg:      #09090b;
@@ -456,6 +462,8 @@
   <!-- Supabase lib self-hosted (not a CDN import) so auth survives a blocked/flaky CDN -->
   <script src="supabase.umd.js"></script>
   <script type="module" src="app.js"></script>
-
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  </script>
 </body>
 </html>

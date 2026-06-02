@@ -1,0 +1,13 @@
+{
+  "name": "CharlesLogic",
+  "short_name": "CharlesLogic",
+  "description": "Apps and projects by Charles Richards",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#7c3aed",
+  "icons": [
+    { "src": "cl-icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
