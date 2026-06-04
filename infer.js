@@ -398,6 +398,15 @@ function timeSince(dateStr) {
   return Math.floor(h / 24) + 'd ago';
 }
 
+// eBird obsDt is "YYYY-MM-DD HH:MM" local time — day-level accuracy is fine
+function ebirdAge(obsDt) {
+  if (!obsDt) return '';
+  const days = Math.floor((Date.now() - new Date(obsDt.slice(0, 10) + 'T12:00:00')) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return '1d ago';
+  return days + 'd ago';
+}
+
 // Distance in miles between two lat/lng points (haversine)
 function distMi(lat1, lng1, lat2, lng2) {
   const R = 3959;
@@ -449,9 +458,9 @@ async function loadNearbyBirds() {
     // Fetch iNat page 1 + both eBird endpoints in parallel
     const [inatPage1, recentRes, notableRes] = await Promise.allSettled([
       fetch(inatBase + '&page=1').then(r => r.ok ? r.json() : Promise.reject('iNat ' + r.status)),
-      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=10000&mode=recent`)
+      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=10000&mode=recent&detail=full`)
         .then(r => r.ok ? r.json() : Promise.reject('eBird recent ' + r.status)),
-      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=10000&mode=notable`)
+      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=10000&mode=notable&detail=full`)
         .then(r => r.ok ? r.json() : Promise.reject('eBird notable ' + r.status)),
     ]);
 
@@ -532,12 +541,16 @@ async function loadNearbyBirds() {
     text += `🐦 eBird – last 7d, ~30mi radius (${combined.length} entries, ${ebirdNotable.length} notable${ebirdLimitNote}${ebirdFail})\n`;
     if (ebirdShown.length) {
       ebirdShown.forEach(o => {
-        const name   = o.comName || o.sciName || 'Unknown';
-        const count  = o.howMany ? ` — ${o.howMany} seen` : '';
-        const dist   = locLabel(userLat, userLng, o.lat, o.lng);
-        const place  = o.locName ? ` (${o.locName})` : '';
-        const marker = notableCodes.has(o.speciesCode) ? '⭐ ' : '• ';
-        text += `${marker}${name}${count}${dist}${place}\n`;
+        const name     = o.comName || o.sciName || 'Unknown';
+        const age      = ebirdAge(o.obsDt);
+        const when     = age ? ` — ${age}` : '';
+        const count    = o.howMany ? ` | ${o.howMany} seen` : '';
+        const dist     = locLabel(userLat, userLng, o.lat, o.lng);
+        const place    = o.locName ? ` (${o.locName})` : '';
+        const observer = o.userDisplayName || (o.firstName ? `${o.firstName} ${o.lastName || ''}`.trim() : null);
+        const who      = observer ? ` [@${observer}]` : '';
+        const marker   = notableCodes.has(o.speciesCode) ? '⭐ ' : '• ';
+        text += `${marker}${name}${when}${count}${dist}${place}${who}\n`;
       });
     } else {
       text += `• ${recentRes.status === 'rejected' ? 'Fetch failed' : 'No observations found'}\n`;
