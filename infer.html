@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NAM Provider Comparator</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+  <style>
+    /* ── Color tokens ─────────────────────────────────────────── */
+    :root {
+      --bg-page:    #0a0d0a;
+      --bg-app:     #111611;
+      --bg-bar:     #0d130d;
+      --bg-input:   #1a231a;
+      --bg-ph:      #0f1a0f;
+      --border:     #2e3a2e;
+      --border-2:   #2a3a2a;
+      --border-3:   #1e2e1e;
+      --text:       #c8e6c8;
+      --text-2:     #a8d4a8;
+      --text-dim:   #4a8a4a;
+      --text-faint: #2e5a2e;
+      --accent:     #4caf50;
+      --accent-2:   #81c784;
+      --badge-bg:   #0f1f0f;
+      --badge-bdr:  #1e3e1e;
+      --badge-txt:  #2e6a2e;
+      --error:      #f08080;
+      --user-bg:    #0d160d;
+      --user-bdr:   #2a5a2a;
+      --user-txt:   #5a9a5a;
+      --ask-bg:     #4caf50;
+      --ask-fg:     #0a1a0a;
+    }
+    /* explicit dark override (beats any OS light-mode preference) */
+    html[data-theme="dark"] { color-scheme: dark; }
+    html[data-theme="light"] {
+        --bg-page:    #edf4ed;
+        --bg-app:     #ffffff;
+        --bg-bar:     #f4faf4;
+        --bg-input:   #ffffff;
+        --bg-ph:      #f0f8f0;
+        --border:     #b8d4b8;
+        --border-2:   #c4d8c4;
+        --border-3:   #d0e4d0;
+        --text:       #1a2e1a;
+        --text-2:     #2e4e2e;
+        --text-dim:   #3a7a3a;
+        --text-faint: #5a9a5a;
+        --accent:     #2e7d32;
+        --accent-2:   #388e3c;
+        --badge-bg:   #e8f5e9;
+        --badge-bdr:  #a5d6a7;
+        --badge-txt:  #2e7d32;
+        --error:      #c62828;
+        --user-bg:    #f1f8f1;
+        --user-bdr:   #81c784;
+        --user-txt:   #2e7d32;
+        --ask-bg:     #2e7d32;
+        --ask-fg:     #ffffff;
+    }
+
+    /* ── Reset & base ─────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg-page); color: var(--text); font-family: system-ui, sans-serif;
+           padding: 16px; min-height: 100dvh; }
+    @media (max-width: 600px) { body { padding: 6px; } }
+
+    #app { background: var(--bg-app); border-radius: 16px; border: 1.5px solid var(--border);
+           overflow: hidden; max-width: 1600px; margin: 0 auto; }
+
+    /* ── Keys collapsible ─────────────────────────────────────── */
+    #keys-toggle-bar {
+      background: var(--bg-bar); border-bottom: 1px solid var(--border-2);
+      padding: 9px 14px; display: flex; align-items: center;
+      justify-content: space-between; cursor: pointer; user-select: none;
+    }
+    #keys-toggle-bar:hover { background: var(--bg-ph); }
+    .ktl { font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: .06em; }
+    .ktr { display: flex; align-items: center; gap: 8px; }
+    .ktr-hint { font-size: 10px; color: var(--text-faint); }
+    .ktr-chevron { font-size: 11px; color: var(--text-dim); transition: transform .2s; display: inline-block; }
+    .ktr-chevron.open { transform: rotate(180deg); }
+
+    #keys-bar { background: var(--bg-bar); border-bottom: 1.5px solid var(--border-2);
+                padding: 10px 14px; display: flex; flex-direction: column; gap: 7px; }
+    #keys-bar.collapsed { display: none; }
+    .key-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .key-label { font-size: 10px; font-weight: 600; letter-spacing: .07em; color: var(--accent);
+                 background: var(--badge-bg); border: 1px solid var(--badge-bdr); border-radius: 6px;
+                 padding: 2px 8px; white-space: nowrap; width: 110px; text-align: center; flex-shrink: 0; }
+    .key-label.direct { color: var(--accent-2); }
+    .key-input { flex: 1; min-width: 140px; font-size: 12px; font-family: ui-monospace, monospace;
+                 padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border);
+                 background: var(--bg-input); color: var(--text); outline: none; }
+    .key-input::placeholder { color: var(--text-faint); }
+    .key-input:focus { border-color: var(--accent); }
+    .key-hint { font-size: 10px; color: var(--text-faint); white-space: nowrap; }
+
+    /* ── Context area ─────────────────────────────────────────── */
+    #context-area { padding: 8px 14px; border-bottom: 1px solid var(--border-2); background: var(--bg-ph); }
+    #ctx-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+    #ctx-label { font-size: 10px; color: var(--text-dim); letter-spacing: .07em; text-transform: uppercase; font-weight: 600; }
+    #load-birds-btn { font-size: 11px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border);
+                      background: transparent; color: var(--text-dim); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    #load-birds-btn:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+    #load-birds-btn:disabled { opacity: .5; cursor: not-allowed; }
+    #context-input { width: 100%; font-size: 12px; padding: 7px 10px; border-radius: 10px;
+                     border: 1px solid var(--border); background: var(--bg-input); color: var(--text-2);
+                     resize: vertical; min-height: 44px; max-height: 120px;
+                     font-family: ui-monospace, monospace; outline: none; line-height: 1.5; }
+    #context-input::placeholder { color: var(--text-faint); }
+    #context-input:focus { border-color: var(--accent); }
+
+    /* ── Model toggles ────────────────────────────────────────── */
+    #model-toggles { display: flex; gap: 6px; padding: 8px 14px; background: var(--bg-bar);
+                     border-bottom: 1px solid var(--border-2); flex-wrap: wrap; align-items: center; }
+    .section-sep { font-size: 10px; color: var(--text-faint); padding: 0 4px; }
+    .model-toggle { font-size: 11px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border);
+                    background: var(--bg-input); color: var(--text-dim); cursor: pointer; font-weight: 500;
+                    transition: all .15s; touch-action: manipulation; }
+    .model-toggle.active { background: var(--bg-ph); color: var(--accent); border-color: var(--accent); }
+    .model-toggle.direct-model { border-style: dashed; }
+    .model-toggle.direct-model.active { border-style: solid; }
+
+    /* ── Question bar ─────────────────────────────────────────── */
+    #question-bar { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1.5px solid var(--border-2);
+                    background: var(--bg-app); align-items: flex-end; }
+    #question-input { flex: 1; font-size: 15px; padding: 10px 14px; border-radius: 14px;
+                      border: 1px solid var(--border); background: var(--bg-input); color: var(--text);
+                      resize: none; min-height: 44px; max-height: 120px; font-family: system-ui, sans-serif;
+                      outline: none; line-height: 1.5; }
+    #question-input::placeholder { color: var(--text-faint); }
+    #question-input:focus { border-color: var(--accent); }
+    #ask-btn { padding: 10px 20px; border-radius: 14px; border: none; background: var(--ask-bg);
+               color: var(--ask-fg); font-size: 15px; font-weight: 700; cursor: pointer;
+               white-space: nowrap; min-height: 44px; touch-action: manipulation; }
+    #ask-btn:hover:not(:disabled) { opacity: .88; }
+    #ask-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+    /* ── Panels ───────────────────────────────────────────────── */
+    #panels-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    @media (max-width: 640px) { #panels-wrap { grid-template-columns: 1fr; } }
+
+    .panel { border-right: 1px solid var(--border-3); display: flex; flex-direction: column; min-height: 160px; }
+    .panel:last-child { border-right: none; }
+    @media (max-width: 640px) { .panel { border-right: none; border-bottom: 1px solid var(--border-3); }
+                                 .panel:last-child { border-bottom: none; } }
+
+    .panel-header { padding: 7px 10px; background: var(--bg-ph); border-bottom: 1px solid var(--border-3);
+                    display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+    .panel-header-left { min-width: 0; }
+    .panel-name { font-size: 12px; font-weight: 700; color: var(--accent); }
+    .panel-provider { font-size: 10px; color: var(--text-dim); margin-top: 1px; display: flex; align-items: center; gap: 4px; }
+    .via-badge { font-size: 9px; background: var(--badge-bg); border: 1px solid var(--badge-bdr);
+                 border-radius: 4px; padding: 1px 5px; color: var(--badge-txt); }
+    .panel-expand-row { padding: 6px 12px; border-top: 1px solid var(--border-3);
+                        font-size: 12px; color: var(--text-dim); cursor: pointer;
+                        text-align: center; letter-spacing: .05em; user-select: none;
+                        background: var(--bg-bar); transition: all .15s; }
+    .panel-expand-row:hover { color: var(--accent); background: var(--bg-ph); }
+
+    /* ── Expand overlay ───────────────────────────────────────── */
+    #panel-overlay { display: none; position: fixed; inset: 0; z-index: 1000;
+                     background: rgba(0,0,0,0.7); padding: 24px 16px;
+                     overflow-y: auto; align-items: flex-start; justify-content: center; }
+    #panel-overlay.open { display: flex; }
+    #overlay-card { background: var(--bg-app); border: 1.5px solid var(--border);
+                    border-radius: 16px; width: 100%; max-width: 820px;
+                    display: flex; flex-direction: column; max-height: calc(100dvh - 48px); }
+    #overlay-header { display: flex; align-items: center; justify-content: space-between;
+                      padding: 10px 16px; background: var(--bg-ph);
+                      border-bottom: 1px solid var(--border-3);
+                      border-radius: 14px 14px 0 0; flex-shrink: 0; }
+    #overlay-title-wrap { display: flex; align-items: center; gap: 8px; }
+    #overlay-title { font-size: 14px; font-weight: 700; color: var(--accent); }
+    #overlay-provider-badge { font-size: 10px; color: var(--text-dim); }
+    #overlay-close { font-size: 18px; background: none; border: none; color: var(--text-dim);
+                     cursor: pointer; padding: 2px 6px; border-radius: 6px; line-height: 1; }
+    #overlay-close:hover { color: var(--accent); }
+    #overlay-body { flex: 1; overflow-y: auto; padding: 16px 20px;
+                    font-size: 14px; line-height: 1.75; color: var(--text-2);
+                    word-break: break-word; display: flex; flex-direction: column; gap: 10px; }
+    #overlay-meta { padding: 6px 16px; border-top: 1px solid var(--border-3); font-size: 11px;
+                    color: var(--text-faint); font-family: ui-monospace, monospace;
+                    flex-shrink: 0; border-radius: 0 0 14px 14px; }
+
+    /* chat thread */
+    .panel-body { flex: 1; padding: 12px 14px; font-size: 14px; line-height: 1.7; color: var(--text-2);
+                  word-break: break-word; overflow-y: auto; max-height: 520px;
+                  display: flex; flex-direction: column; gap: 10px; }
+    @media (max-width: 640px) { .panel-body { max-height: 340px; font-size: 15px; line-height: 1.75; } }
+
+    .idle-text { color: var(--text-faint); font-style: italic; font-size: 12px; }
+
+    .msg-user { font-size: 11px; color: var(--user-txt); background: var(--user-bg);
+                border-left: 2px solid var(--user-bdr); padding: 4px 8px;
+                border-radius: 0 6px 6px 0; font-style: italic; }
+    .msg-assistant { color: var(--text-2); }
+    .msg-thinking { color: var(--text-dim); font-style: italic; font-size: 12px; }
+    .msg-error { color: var(--error); font-size: 12px; }
+
+    /* markdown inside assistant messages */
+    .msg-assistant h1, .msg-assistant h2, .msg-assistant h3 { color: var(--accent-2); margin: 8px 0 4px; font-size: 14px; font-weight: 700; }
+    .msg-assistant p { margin-bottom: 6px; }
+    .msg-assistant ul, .msg-assistant ol { margin-left: 16px; margin-bottom: 8px; }
+    .msg-assistant li { margin-bottom: 2px; }
+    .msg-assistant strong { color: var(--text); }
+    .msg-assistant table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 11px; }
+    .msg-assistant th { background: var(--bg-ph); color: var(--accent); font-weight: 600;
+                        text-align: left; padding: 5px 7px; border: 1px solid var(--border-3); }
+    .msg-assistant td { padding: 5px 7px; border: 1px solid var(--border-3); color: var(--text); }
+    .msg-assistant tr:nth-child(even) { background: var(--bg-bar); }
+
+    /* meta footer */
+    .panel-meta { padding: 4px 10px; border-top: 1px solid var(--border-3); font-size: 11px;
+                  color: var(--text-faint); font-family: ui-monospace, monospace; min-height: 22px; }
+
+    /* ── Bottom bar ───────────────────────────────────────────── */
+    #bottom-bar { display: flex; justify-content: space-between; align-items: center;
+                  padding: 7px 14px; background: var(--bg-bar); border-top: 1px solid var(--border-2); }
+    #status-msg { font-size: 11px; color: var(--text-faint); font-family: ui-monospace, monospace; }
+    .bar-btn { font-size: 12px; padding: 5px 13px; border-radius: 8px; border: 1px solid var(--border-2);
+               background: transparent; color: var(--text-dim); cursor: pointer; touch-action: manipulation; }
+    .bar-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+               overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  </style>
+</head>
+<body>
+
+<h2 class="sr-only">NAM provider comparator — test free AI providers side by side</h2>
+
+<div id="app">
+
+  <!-- ── Keys (collapsible) ── -->
+  <div id="keys-toggle-bar" role="button" aria-expanded="false" aria-controls="keys-bar">
+    <span class="ktl">🔑 API Keys</span>
+    <span class="ktr">
+      <span class="ktr-hint" id="keys-status">tap to expand</span>
+      <span class="ktr-chevron" id="keys-chevron">▼</span>
+    </span>
+  </div>
+  <div id="keys-bar" class="collapsed">
+    <div class="key-row">
+      <span class="key-label">OpenRouter</span>
+      <input class="key-input" id="key-or" type="password" placeholder="openrouter.ai/keys" autocomplete="off" />
+      <span class="key-hint">free · one key</span>
+    </div>
+    <div class="key-row">
+      <span class="key-label direct">Gemini direct</span>
+      <input class="key-input" id="key-gemini" type="password" placeholder="aistudio.google.com" autocomplete="off" />
+      <span class="key-hint">20 req/day free</span>
+    </div>
+    <div class="key-row">
+      <span class="key-label direct">Cerebras direct</span>
+      <input class="key-input" id="key-cerebras" type="password" placeholder="cloud.cerebras.ai" autocomplete="off" />
+      <span class="key-hint">~3000 tok/s free</span>
+    </div>
+    <div class="key-row">
+      <span class="key-label direct">Groq direct</span>
+      <input class="key-input" id="key-groq" type="password" placeholder="console.groq.com" autocomplete="off" />
+      <span class="key-hint">LPU fast free</span>
+    </div>
+  </div>
+
+  <!-- ── Context ── -->
+  <div id="context-area">
+    <div id="ctx-header">
+      <span id="ctx-label">Context (eBird / iNat / life list)</span>
+      <button id="load-birds-btn">📍 Load nearby birds</button>
+    </div>
+    <textarea id="context-input" placeholder="Paste observation context — or tap 📍 to auto-load nearby birds from iNat + eBird…"></textarea>
+  </div>
+
+  <!-- ── Model toggles ── -->
+  <div id="model-toggles"></div>
+
+  <!-- ── Question bar ── -->
+  <div id="question-bar">
+    <textarea id="question-input" rows="1" placeholder="Ask all selected models… (Enter to send, Shift+Enter for newline)"></textarea>
+    <button id="ask-btn">Ask all</button>
+  </div>
+
+  <!-- ── Answer panels ── -->
+  <div id="panels-wrap"></div>
+
+  <!-- ── Bottom bar ── -->
+  <div id="bottom-bar">
+    <span id="status-msg"></span>
+    <div style="display:flex;gap:6px;">
+      <button class="bar-btn" id="theme-btn">☀️ light</button>
+      <button class="bar-btn" id="new-chat-btn">new chat</button>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- ── Expand overlay ── -->
+<div id="panel-overlay" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+  <div id="overlay-card">
+    <div id="overlay-header">
+      <div id="overlay-title-wrap">
+        <span id="overlay-title"></span>
+        <span id="overlay-provider-badge"></span>
+      </div>
+      <button id="overlay-close" aria-label="Close">✕</button>
+    </div>
+    <div id="overlay-body"></div>
+    <div id="overlay-meta"></div>
+  </div>
+</div>
+
+<script>
+// ── Model registry ────────────────────────────────────────────────────────────
+const OR_MODELS = [
+  { id: 'openai/gpt-oss-120b:free',              name: 'GPT-OSS 120B',  provider: 'OpenAI' },
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free', name: 'Nemotron 120B', provider: 'NVIDIA' },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B', provider: 'Meta'   },
+];
+const DIRECT_MODELS = [
+  { id: 'gemini-2.5-flash',        name: 'Gemini 2.5 Flash', provider: 'Google',   via: 'gemini'   },
+  { id: 'gpt-oss-120b',            name: 'Cerebras 120B',    provider: 'Cerebras', via: 'cerebras' },
+  { id: 'llama-3.3-70b-versatile', name: 'Groq Llama 3.3',  provider: 'Groq',     via: 'groq'     },
+];
+const ALL_MODELS = [...OR_MODELS.map(m => ({...m, via: 'openrouter'})), ...DIRECT_MODELS];
+
+let activeModels = new Set([
+  'openai/gpt-oss-120b:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'gpt-oss-120b',
+  'llama-3.3-70b-versatile',
+]);
+
+// Per-model conversation history { modelId: [{role, content}] }
+const history = {};
+const getHistory = id => (history[id] = history[id] || []);
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const togglesEl   = document.getElementById('model-toggles');
+const panelsWrap  = document.getElementById('panels-wrap');
+const askBtn      = document.getElementById('ask-btn');
+const newChatBtn  = document.getElementById('new-chat-btn');
+const questionEl  = document.getElementById('question-input');
+const contextEl   = document.getElementById('context-input');
+const statusEl    = document.getElementById('status-msg');
+const loadBirdsBtn = document.getElementById('load-birds-btn');
+
+// ── Keys collapsible ──────────────────────────────────────────────────────────
+(function initKeysToggle() {
+  const bar      = document.getElementById('keys-bar');
+  const toggleBar = document.getElementById('keys-toggle-bar');
+  const chevron  = document.getElementById('keys-chevron');
+  const hint     = document.getElementById('keys-status');
+  let open = localStorage.getItem('infer-keys-open') === '1';
+
+  function apply() {
+    bar.classList.toggle('collapsed', !open);
+    chevron.classList.toggle('open', open);
+    hint.textContent = open ? 'tap to hide' : 'tap to expand';
+    toggleBar.setAttribute('aria-expanded', open);
+    localStorage.setItem('infer-keys-open', open ? '1' : '0');
+  }
+  toggleBar.addEventListener('click', () => { open = !open; apply(); });
+  apply();
+})();
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function panelEls(id) {
+  const p = document.getElementById('panel-' + id.replace(/[^a-z0-9]/gi, '_'));
+  return p ? { body: p.querySelector('.panel-body'), meta: p.querySelector('.panel-meta') } : {};
+}
+
+function appendMsgEl(bodyEl, role, content) {
+  if (!bodyEl) return null;
+  const idle = bodyEl.querySelector('.idle-text');
+  if (idle) idle.remove();
+  const el = document.createElement('div');
+  el.className = 'msg-' + role;
+  if (role === 'assistant') {
+    el.innerHTML = typeof marked !== 'undefined' ? marked.parse(content) : content;
+  } else {
+    el.textContent = content;
+  }
+  bodyEl.appendChild(el);
+  bodyEl.scrollTop = bodyEl.scrollHeight;
+  return el;
+}
+
+function beginAssistantMsg(id) {
+  const { body } = panelEls(id);
+  if (!body) return null;
+  const idle = body.querySelector('.idle-text');
+  if (idle) idle.remove();
+  const el = document.createElement('div');
+  el.className = 'msg-thinking';
+  el.textContent = 'thinking…';
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+  return el;
+}
+
+function finalizeMsg(el, id, content, isError) {
+  if (!el) return;
+  const { body } = panelEls(id);
+  el.className = isError ? 'msg-error' : 'msg-assistant';
+  if (!isError && typeof marked !== 'undefined') {
+    el.innerHTML = marked.parse(content);
+  } else {
+    el.textContent = content;
+  }
+  if (body) body.scrollTop = body.scrollHeight;
+}
+
+function setMeta(id, text) {
+  const { meta } = panelEls(id);
+  if (meta) meta.textContent = text;
+}
+
+// ── Panel / toggle builders ───────────────────────────────────────────────────
+function buildToggles() {
+  togglesEl.innerHTML = '<span style="font-size:10px;color:var(--text-faint);margin-right:2px;">via OpenRouter:</span>';
+  OR_MODELS.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'model-toggle' + (activeModels.has(m.id) ? ' active' : '');
+    btn.textContent = m.name; btn.dataset.id = m.id;
+    btn.addEventListener('click', () => toggleModel(m.id, btn));
+    togglesEl.appendChild(btn);
+  });
+  const sep = document.createElement('span');
+  sep.className = 'section-sep'; sep.textContent = '| direct:';
+  togglesEl.appendChild(sep);
+  DIRECT_MODELS.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'model-toggle direct-model' + (activeModels.has(m.id) ? ' active' : '');
+    btn.textContent = m.name; btn.dataset.id = m.id;
+    btn.addEventListener('click', () => toggleModel(m.id, btn));
+    togglesEl.appendChild(btn);
+  });
+}
+
+function toggleModel(id, btn) {
+  if (activeModels.has(id)) { if (activeModels.size > 1) { activeModels.delete(id); btn.classList.remove('active'); } }
+  else { activeModels.add(id); btn.classList.add('active'); }
+  buildPanels();
+}
+
+function buildPanels() {
+  panelsWrap.innerHTML = '';
+  ALL_MODELS.filter(m => activeModels.has(m.id)).forEach(m => {
+    const viaTxt = m.via === 'openrouter' ? 'OpenRouter' : 'direct';
+
+    // header
+    const header = document.createElement('div');
+    header.className = 'panel-header';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'panel-name';
+    nameEl.textContent = m.name;
+    const provEl = document.createElement('div');
+    provEl.className = 'panel-provider';
+    provEl.textContent = m.provider + ' ';
+    const badge = document.createElement('span');
+    badge.className = 'via-badge';
+    badge.textContent = viaTxt;
+    provEl.appendChild(badge);
+    header.appendChild(nameEl);
+    header.appendChild(provEl);
+
+    // body
+    const body = document.createElement('div');
+    body.className = 'panel-body';
+    const hist = getHistory(m.id);
+    if (hist.length) {
+      hist.forEach(msg => appendMsgEl(body, msg.role, msg.content));
+    } else {
+      body.innerHTML = '<span class="idle-text">waiting…</span>';
+    }
+
+    // expand row
+    const expandRow = document.createElement('div');
+    expandRow.className = 'panel-expand-row';
+    expandRow.textContent = '↗ expand';
+    expandRow.addEventListener('click', () => openOverlay(m.id));
+
+    // meta
+    const meta = document.createElement('div');
+    meta.className = 'panel-meta';
+
+    // assemble panel
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.id = 'panel-' + m.id.replace(/[^a-z0-9]/gi, '_');
+    panel.appendChild(header);
+    panel.appendChild(body);
+    panel.appendChild(expandRow);
+    panel.appendChild(meta);
+    panelsWrap.appendChild(panel);
+  });
+}
+
+// ── System prompt ─────────────────────────────────────────────────────────────
+function buildSystemPrompt() {
+  const ctx = contextEl.value.trim();
+  return ctx
+    ? `You are a helpful birding assistant for the NAM app.\n\nContext:\n${ctx}\n\nAnswer concisely based on this context.`
+    : 'You are a helpful birding assistant for the NAM app. Answer concisely.';
+}
+
+// ── Query functions (all return reply string | null) ──────────────────────────
+async function queryOpenRouter(model, messages) {
+  const key = document.getElementById('key-or').value.trim();
+  if (!key) { const el = beginAssistantMsg(model.id); finalizeMsg(el, model.id, 'No OpenRouter key.', true); return null; }
+  const start = Date.now();
+  let fullResponse = '';
+  const el = beginAssistantMsg(model.id);
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key,
+        'HTTP-Referer': 'https://charleslogic.com',
+        'X-Title': 'NAM Provider Comparator',
+      },
+      body: JSON.stringify({ model: model.id, messages, max_tokens: 1024, temperature: 0.7, stream: true }),
+    });
+    if (!res.ok) {
+      let msg;
+      if      (res.status === 402) msg = '402: Model requires a credit balance on OpenRouter.';
+      else if (res.status === 429) msg = '429: Rate limited — try again in a moment.';
+      else {
+        try { const d = await res.json(); msg = `HTTP ${res.status}: ${d.error?.message || JSON.stringify(d)}`; }
+        catch { msg = 'HTTP ' + res.status; }
+      }
+      finalizeMsg(el, model.id, msg, true); return null;
+    }
+    if (el) { el.className = 'msg-assistant'; el.textContent = ''; }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    const { body } = panelEls(model.id);
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      for (const line of decoder.decode(value).split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const ds = line.slice(6).trim();
+        if (ds === '[DONE]') break;
+        try {
+          const content = JSON.parse(ds).choices?.[0]?.delta?.content;
+          if (content) { fullResponse += content; if (el) el.textContent = fullResponse; }
+        } catch {}
+      }
+      if (body) body.scrollTop = body.scrollHeight;
+    }
+    if (el && typeof marked !== 'undefined') el.innerHTML = marked.parse(fullResponse);
+    if (panelEls(model.id).body) panelEls(model.id).body.scrollTop = 9999;
+    setMeta(model.id, ((Date.now() - start) / 1000).toFixed(1) + 's');
+    return fullResponse || null;
+  } catch(e) { finalizeMsg(el, model.id, 'Streaming error: ' + e.message, true); return null; }
+}
+
+async function queryGemini(model, messages, attempt = 1, existingEl = null) {
+  const key = document.getElementById('key-gemini').value.trim();
+  if (!key) { finalizeMsg(beginAssistantMsg(model.id), model.id, 'No Gemini key.', true); return null; }
+  const start = Date.now();
+  const el = existingEl || beginAssistantMsg(model.id);
+  const contents = messages.filter(m => m.role !== 'system').map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }],
+  }));
+  const sysMsg = messages.find(m => m.role === 'system');
+  const reqBody = { contents, generationConfig: { maxOutputTokens: 4096, temperature: 0.7 } };
+  if (sysMsg) reqBody.systemInstruction = { parts: [{ text: sysMsg.content }] };
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:generateContent?key=${key}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reqBody) }
+    );
+    const data = await res.json();
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+    if (!res.ok) {
+      const msg = data.error?.message || String(res.status);
+      if (res.status !== 429) { finalizeMsg(el, model.id, `${res.status}: ${msg.split('.')[0]}`, true); return null; }
+      const retryMatch = msg.match(/retry in ([0-9.]+)s/i);
+      const limitMatch = msg.match(/limit:\s*([0-9]+)/gi) || [];
+      const waitSec = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : null;
+      if (limitMatch.some(m => /limit:\s*0\b/.test(m))) {
+        finalizeMsg(el, model.id, `No free quota for ${model.id}. Enable billing at aistudio.google.com.`, true);
+        return null;
+      }
+      if (waitSec !== null && waitSec <= 90 && attempt === 1) {
+        return new Promise(resolve => {
+          const tick = r => {
+            if (el) { el.className = 'msg-thinking'; el.textContent = `RPM limit — retrying in ${r}s…`; }
+            if (r > 0) setTimeout(() => tick(r - 1), 1000);
+            else queryGemini(model, messages, 2, el).then(resolve);
+          };
+          tick(waitSec);
+        });
+      }
+      const limits = limitMatch.map(m => parseInt(m.replace(/\D/g, ''))).filter(n => n > 0);
+      const cap = limits.length ? Math.max(...limits) : null;
+      finalizeMsg(el, model.id, `Daily quota hit${cap ? ' (' + cap + '/day)' : ''}. Try again tomorrow.`, true);
+      return null;
+    }
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '(no response)';
+    const tokens = data.usageMetadata?.candidatesTokenCount;
+    finalizeMsg(el, model.id, reply, false);
+    setMeta(model.id, (tokens ? tokens + ' tok · ' : '') + elapsed + 's');
+    return reply;
+  } catch(e) { finalizeMsg(el, model.id, 'Network error: ' + e.message, true); return null; }
+}
+
+async function queryCerebras(model, messages) {
+  const key = document.getElementById('key-cerebras').value.trim();
+  if (!key) { finalizeMsg(beginAssistantMsg(model.id), model.id, 'No Cerebras key.', true); return null; }
+  const start = Date.now();
+  const el = beginAssistantMsg(model.id);
+  try {
+    const res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({ model: model.id, messages, max_tokens: 4096, temperature: 0.7 }),
+    });
+    const data = await res.json();
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+    if (!res.ok) { finalizeMsg(el, model.id, 'Error: ' + (data.error?.message || res.status), true); return null; }
+    const reply = data.choices?.[0]?.message?.content || '(no response)';
+    const tokens = data.usage?.completion_tokens;
+    finalizeMsg(el, model.id, reply, false);
+    setMeta(model.id, (tokens ? tokens + ' tok · ' : '') + elapsed + 's  ⚡ Cerebras');
+    return reply;
+  } catch(e) { finalizeMsg(el, model.id, 'Network error: ' + e.message, true); return null; }
+}
+
+async function queryGroq(model, messages) {
+  const key = document.getElementById('key-groq').value.trim();
+  if (!key) { finalizeMsg(beginAssistantMsg(model.id), model.id, 'No Groq key.', true); return null; }
+  const start = Date.now();
+  const el = beginAssistantMsg(model.id);
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({ model: model.id, messages, max_tokens: 4096, temperature: 0.7 }),
+    });
+    const data = await res.json();
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+    if (!res.ok) { finalizeMsg(el, model.id, 'Error: ' + (data.error?.message || res.status), true); return null; }
+    const reply = data.choices?.[0]?.message?.content || '(no response)';
+    const tokens = data.usage?.completion_tokens;
+    finalizeMsg(el, model.id, reply, false);
+    setMeta(model.id, (tokens ? tokens + ' tok · ' : '') + elapsed + 's  🚀 Groq');
+    return reply;
+  } catch(e) { finalizeMsg(el, model.id, 'Network error: ' + e.message, true); return null; }
+}
+
+// ── Main orchestrator ─────────────────────────────────────────────────────────
+async function askAll() {
+  const question = questionEl.value.trim();
+  if (!question) return;
+  askBtn.disabled = true;
+  questionEl.value = '';
+  autoResize(questionEl);
+
+  const active = ALL_MODELS.filter(m => activeModels.has(m.id));
+  const sysmsg = { role: 'system', content: buildSystemPrompt() };
+
+  active.forEach(m => {
+    appendMsgEl(panelEls(m.id).body, 'user', question);
+    getHistory(m.id).push({ role: 'user', content: question });
+  });
+
+  const turn = Math.max(...active.map(m => Math.ceil(getHistory(m.id).length / 2)));
+  statusEl.textContent = `turn ${turn} · querying ${active.length} models…`;
+
+  await Promise.all(active.map(async m => {
+    const messages = [sysmsg, ...getHistory(m.id)];
+    let reply = null;
+    try {
+      if      (m.via === 'gemini')    reply = await queryGemini(m, messages);
+      else if (m.via === 'cerebras') reply = await queryCerebras(m, messages);
+      else if (m.via === 'groq')     reply = await queryGroq(m, messages);
+      else                           reply = await queryOpenRouter(m, messages);
+    } catch(err) {
+      finalizeMsg(beginAssistantMsg(m.id), m.id, 'Error: ' + err.message, true);
+    }
+    if (reply) {
+      getHistory(m.id).push({ role: 'assistant', content: reply });
+    } else {
+      getHistory(m.id).pop();
+    }
+  }));
+
+  statusEl.textContent = `turn ${turn} · done ✓`;
+  askBtn.disabled = false;
+}
+
+function newConversation() {
+  ALL_MODELS.forEach(m => { history[m.id] = []; });
+  buildPanels();
+  questionEl.value = '';
+  statusEl.textContent = 'new conversation';
+  autoResize(questionEl);
+}
+
+// ── Load nearby birds (iNat + eBird) ─────────────────────────────────────────
+function timeSince(dateStr) {
+  if (!dateStr) return 'recently';
+  const h = Math.floor((Date.now() - new Date(dateStr)) / 3600000);
+  if (h < 1)  return 'today';
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+// Distance in miles between two lat/lng points (haversine)
+function distMi(lat1, lng1, lat2, lng2) {
+  const R = 3959;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2
+          + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
+          * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Cardinal direction from point 1 → point 2
+function cardDir(lat1, lng1, lat2, lng2) {
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const y = Math.sin(dLng) * Math.cos(lat2 * Math.PI / 180);
+  const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180)
+           - Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLng);
+  const b = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  return ['N','NE','E','SE','S','SW','W','NW'][Math.round(b / 45) % 8];
+}
+
+// "2.3mi NE" label, or empty string if coords missing
+function locLabel(userLat, userLng, obsLat, obsLng) {
+  if (obsLat == null || obsLng == null) return '';
+  const d = distMi(userLat, userLng, obsLat, obsLng);
+  const dir = cardDir(userLat, userLng, obsLat, obsLng);
+  return ` | ${d < 0.1 ? '<0.1' : d.toFixed(1)}mi ${dir}`;
+}
+
+async function loadNearbyBirds() {
+  loadBirdsBtn.disabled = true;
+  loadBirdsBtn.textContent = '⏳ locating…';
+  try {
+    const pos = await new Promise((resolve, reject) =>
+      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 12000 })
+    );
+    const lat = pos.coords.latitude.toFixed(4);
+    const lng = pos.coords.longitude.toFixed(4);
+    loadBirdsBtn.textContent = '⏳ fetching…';
+
+    const d1 = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+
+    // 30 miles ≈ 48km for iNat; eBird dist param max is 50km (≈ 31mi)
+    const INAT_KM  = 48;
+    const EBIRD_KM = 50;
+
+    // Three parallel fetches — matches NAM scan parameters
+    const [inatRes, recentRes, notableRes] = await Promise.allSettled([
+      fetch(`https://api.inaturalist.org/v1/observations?taxon_id=3&lat=${lat}&lng=${lng}&radius=${INAT_KM}&per_page=200&order_by=observed_on&d1=${d1}`)
+        .then(r => r.ok ? r.json() : Promise.reject('iNat ' + r.status)),
+      fetch(`https://nam.charleslogic.com/nam/ebird_proxy.php?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=200&mode=recent`)
+        .then(r => r.ok ? r.json() : Promise.reject('eBird recent ' + r.status)),
+      fetch(`https://nam.charleslogic.com/nam/ebird_proxy.php?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=200&mode=notable`)
+        .then(r => r.ok ? r.json() : Promise.reject('eBird notable ' + r.status)),
+    ]);
+
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
+    let text = `YOUR LOCATION: ${lat}, ${lng} — ${new Date().toLocaleTimeString()}\n\n`;
+
+    // ── iNaturalist ──────────────────────────────────────────────
+    const inatObs   = inatRes.status === 'fulfilled' ? (inatRes.value?.results ?? []) : [];
+    const inatTotal = inatRes.status === 'fulfilled' ? (inatRes.value?.total_results ?? inatObs.length) : 0;
+    const inatErr   = inatRes.status === 'rejected'  ? ` ⚠️ ${inatRes.reason}` : '';
+
+    // Deduplicate: one row per species, keeping the closest non-obscured observation.
+    // Skip class/order-level IDs (e.g. "Birds (Aves)") — too broad to be useful.
+    const BROAD_RANKS = new Set(['kingdom','phylum','class','subclass','order','superorder']);
+    const inatByTaxon = new Map();
+    inatObs.forEach(o => {
+      if (BROAD_RANKS.has(o.taxon?.rank)) return;
+      const key    = o.taxon?.id ?? `unk_${o.id}`;
+      const rawLoc = o.location ? o.location.split(',') : null;
+      const oLat   = (rawLoc && !o.obscured) ? parseFloat(rawLoc[0]) : null;
+      const oLng   = (rawLoc && !o.obscured) ? parseFloat(rawLoc[1]) : null;
+      const d      = oLat != null ? distMi(userLat, userLng, oLat, oLng) : Infinity;
+      const prev   = inatByTaxon.get(key);
+      if (!prev || d < prev.d) inatByTaxon.set(key, { o, oLat, oLng, d });
+    });
+    const inatSpecies = [...inatByTaxon.values()].sort((a, b) => a.d - b.d);
+
+    text += `🦋 iNaturalist – last 7d, 30mi radius (${inatTotal} obs · ${inatSpecies.length} species · nearest first${inatErr})\n`;
+    if (inatSpecies.length) {
+      inatSpecies.forEach(({ o, oLat, oLng, d }) => {
+        const common = o.taxon?.preferred_common_name || o.taxon?.name || 'Unknown';
+        const sci    = o.taxon?.name ?? '';
+        const label  = sci && sci !== common ? `${common} (${sci})` : common;
+        const when   = timeSince(o.observed_on || o.time_observed_at);
+        const dist   = o.obscured ? ' | ~obscured' : locLabel(userLat, userLng, oLat, oLng);
+        const place  = o.place_guess ? ` (${o.place_guess})` : '';
+        text += `• ${label} — ${when}${dist}${place}\n`;
+      });
+    } else {
+      text += `• ${inatRes.status === 'rejected' ? 'Fetch failed' : 'No observations found'}\n`;
+    }
+
+    text += '\n';
+
+    // ── eBird (recent + notable merged) ─────────────────────────
+    const ebirdRecent  = recentRes.status  === 'fulfilled' && Array.isArray(recentRes.value)  ? recentRes.value  : [];
+    const ebirdNotable = notableRes.status === 'fulfilled' && Array.isArray(notableRes.value) ? notableRes.value : [];
+    const notableCodes = new Set(ebirdNotable.map(o => o.speciesCode));
+
+    // Merge: recent as base, append notable-only species
+    const recentCodes = new Set(ebirdRecent.map(o => o.speciesCode));
+    const combined = [
+      ...ebirdRecent,
+      ...ebirdNotable.filter(o => !recentCodes.has(o.speciesCode)),
+    ];
+    // Sort notable first, then alpha
+    combined.sort((a, b) =>
+      (notableCodes.has(b.speciesCode) ? 1 : 0) - (notableCodes.has(a.speciesCode) ? 1 : 0)
+      || (a.comName ?? '').localeCompare(b.comName ?? '')
+    );
+
+    const ebirdFail = recentRes.status === 'rejected' ? ` ⚠️ ${recentRes.reason}` : '';
+    text += `🐦 eBird – last 7d, ~30mi radius (${combined.length} species, ${ebirdNotable.length} notable${ebirdFail})\n`;
+    if (combined.length) {
+      combined.forEach(o => {
+        const name   = o.comName || o.sciName || 'Unknown';
+        const count  = o.howMany ? ` — ${o.howMany} seen` : '';
+        const dist   = locLabel(userLat, userLng, o.lat, o.lng);
+        const place  = o.locName ? ` (${o.locName})` : '';
+        const marker = notableCodes.has(o.speciesCode) ? '⭐ ' : '• ';
+        text += `${marker}${name}${count}${dist}${place}\n`;
+      });
+    } else {
+      text += `• ${recentRes.status === 'rejected' ? 'Fetch failed' : 'No observations found'}\n`;
+    }
+
+    contextEl.value = text.trim();
+    contextEl.style.height = 'auto';
+    contextEl.style.height = Math.min(contextEl.scrollHeight, 120) + 'px';
+
+  } catch(e) {
+    contextEl.value = e.code === 1
+      ? 'Location access denied. Allow location in your browser settings.'
+      : 'Could not load bird data: ' + e.message;
+  } finally {
+    loadBirdsBtn.disabled = false;
+    loadBirdsBtn.textContent = '📍 Load nearby birds';
+  }
+}
+
+// ── Expand overlay ───────────────────────────────────────────────────────────
+function openOverlay(modelId) {
+  const model = ALL_MODELS.find(m => m.id === modelId);
+  if (!model) return;
+  const viaTxt = model.via === 'openrouter' ? 'OpenRouter' : 'direct';
+  document.getElementById('overlay-title').textContent = model.name;
+  document.getElementById('overlay-provider-badge').textContent = model.provider + ' · ' + viaTxt;
+  const overlayBody = document.getElementById('overlay-body');
+  overlayBody.innerHTML = '';
+  const { body, meta } = panelEls(modelId);
+  if (body) {
+    [...body.children].forEach(child => {
+      const clone = child.cloneNode(true);
+      // Scale up text sizes in overlay
+      overlayBody.appendChild(clone);
+    });
+  }
+  document.getElementById('overlay-meta').textContent = meta?.textContent ?? '';
+  const overlay = document.getElementById('panel-overlay');
+  overlay.classList.add('open');
+  overlayBody.scrollTop = overlayBody.scrollHeight;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeOverlay() {
+  document.getElementById('panel-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Overlay event wiring (once at boot — not inside buildPanels)
+document.getElementById('panel-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeOverlay();
+});
+document.getElementById('overlay-close').addEventListener('click', closeOverlay);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOverlay(); });
+
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+(function initTheme() {
+  const btn = document.getElementById('theme-btn');
+  const html = document.documentElement;
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let dark = localStorage.getItem('infer-theme')
+    ? localStorage.getItem('infer-theme') === 'dark'
+    : systemDark;
+
+  function apply() {
+    html.setAttribute('data-theme', dark ? 'dark' : 'light');
+    btn.textContent = dark ? '☀️ light' : '🌙 dark';
+    localStorage.setItem('infer-theme', dark ? 'dark' : 'light');
+  }
+  btn.addEventListener('click', () => { dark = !dark; apply(); });
+  apply();
+})();
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+
+questionEl.addEventListener('input', () => autoResize(questionEl));
+questionEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askAll(); }
+});
+askBtn.addEventListener('click', askAll);
+newChatBtn.addEventListener('click', newConversation);
+loadBirdsBtn.addEventListener('click', loadNearbyBirds);
+
+buildToggles();
+buildPanels();
+
+// Populate API key inputs from server env vars
+fetch('/api/infer-keys').then(r => r.ok ? r.json() : {}).then(k => {
+  if (k.openrouter) document.getElementById('key-or').value = k.openrouter;
+  if (k.gemini)     document.getElementById('key-gemini').value = k.gemini;
+  if (k.cerebras)   document.getElementById('key-cerebras').value = k.cerebras;
+  if (k.groq)       document.getElementById('key-groq').value = k.groq;
+}).catch(() => {});
+</script>
+</body>
+</html>
