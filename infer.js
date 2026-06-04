@@ -438,59 +438,79 @@ async function loadNearbyBirds() {
     const lng = pos.coords.longitude.toFixed(4);
     loadBirdsBtn.textContent = '⏳ fetching…';
 
-    const d1 = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+    const maxInat  = parseInt(document.getElementById('cfg-max-inat').value)  || 0;
+    const maxEbird = parseInt(document.getElementById('cfg-max-ebird').value) || 0;
 
+    const d1 = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
     const INAT_KM  = 48;
     const EBIRD_KM = 50;
+    const inatBase = `https://api.inaturalist.org/v1/observations?taxon_id=3&lat=${lat}&lng=${lng}&radius=${INAT_KM}&per_page=200&order_by=observed_on&d1=${d1}`;
 
-    const [inatRes, recentRes, notableRes] = await Promise.allSettled([
-      fetch(`https://api.inaturalist.org/v1/observations?taxon_id=3&lat=${lat}&lng=${lng}&radius=${INAT_KM}&per_page=200&order_by=observed_on&d1=${d1}`)
-        .then(r => r.ok ? r.json() : Promise.reject('iNat ' + r.status)),
-      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=200&mode=recent`)
+    // Fetch iNat page 1 + both eBird endpoints in parallel
+    const [inatPage1, recentRes, notableRes] = await Promise.allSettled([
+      fetch(inatBase + '&page=1').then(r => r.ok ? r.json() : Promise.reject('iNat ' + r.status)),
+      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=10000&mode=recent`)
         .then(r => r.ok ? r.json() : Promise.reject('eBird recent ' + r.status)),
-      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=200&mode=notable`)
+      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=10000&mode=notable`)
         .then(r => r.ok ? r.json() : Promise.reject('eBird notable ' + r.status)),
     ]);
+
+    // iNat — paginate remaining pages
+    let inatObs   = inatPage1.status === 'fulfilled' ? (inatPage1.value?.results ?? []) : [];
+    const inatTotal = inatPage1.status === 'fulfilled' ? (inatPage1.value?.total_results ?? inatObs.length) : 0;
+    const inatErr   = inatPage1.status === 'rejected'  ? ` ⚠️ ${inatPage1.reason}` : '';
+    if (inatPage1.status === 'fulfilled' && inatTotal > 200) {
+      const extraPages = Math.min(9, Math.ceil(inatTotal / 200) - 1);
+      const pageResults = await Promise.allSettled(
+        Array.from({ length: extraPages }, (_, i) =>
+          fetch(`${inatBase}&page=${i + 2}`).then(r => r.ok ? r.json() : Promise.reject())
+        )
+      );
+      pageResults.forEach(r => {
+        if (r.status === 'fulfilled') inatObs = inatObs.concat(r.value?.results ?? []);
+      });
+    }
+
+    // Filter broad-rank IDs and sort by distance
+    const BROAD_RANKS = new Set(['kingdom','phylum','class','subclass','order','superorder']);
+    const inatFiltered = inatObs
+      .filter(o => !BROAD_RANKS.has(o.taxon?.rank))
+      .map(o => {
+        const rawLoc = o.location ? o.location.split(',') : null;
+        const oLat   = (rawLoc && !o.obscured) ? parseFloat(rawLoc[0]) : null;
+        const oLng   = (rawLoc && !o.obscured) ? parseFloat(rawLoc[1]) : null;
+        const d      = oLat != null ? distMi(parseFloat(lat), parseFloat(lng), oLat, oLng) : Infinity;
+        return { o, oLat, oLng, d };
+      })
+      .sort((a, b) => a.d - b.d);
+
+    const inatShown = maxInat > 0 ? inatFiltered.slice(0, maxInat) : inatFiltered;
+    const limitNote = maxInat > 0 && inatFiltered.length > maxInat ? ` · showing ${maxInat}` : '';
 
     const userLat = parseFloat(lat);
     const userLng = parseFloat(lng);
     let text = `YOUR LOCATION: ${lat}, ${lng} — ${new Date().toLocaleTimeString()}\n\n`;
 
-    const inatObs   = inatRes.status === 'fulfilled' ? (inatRes.value?.results ?? []) : [];
-    const inatTotal = inatRes.status === 'fulfilled' ? (inatRes.value?.total_results ?? inatObs.length) : 0;
-    const inatErr   = inatRes.status === 'rejected'  ? ` ⚠️ ${inatRes.reason}` : '';
-
-    const BROAD_RANKS = new Set(['kingdom','phylum','class','subclass','order','superorder']);
-    const inatByTaxon = new Map();
-    inatObs.forEach(o => {
-      if (BROAD_RANKS.has(o.taxon?.rank)) return;
-      const key    = o.taxon?.id ?? `unk_${o.id}`;
-      const rawLoc = o.location ? o.location.split(',') : null;
-      const oLat   = (rawLoc && !o.obscured) ? parseFloat(rawLoc[0]) : null;
-      const oLng   = (rawLoc && !o.obscured) ? parseFloat(rawLoc[1]) : null;
-      const d      = oLat != null ? distMi(userLat, userLng, oLat, oLng) : Infinity;
-      const prev   = inatByTaxon.get(key);
-      if (!prev || d < prev.d) inatByTaxon.set(key, { o, oLat, oLng, d });
-    });
-    const inatSpecies = [...inatByTaxon.values()].sort((a, b) => a.d - b.d);
-
-    text += `🦋 iNaturalist – last 7d, 30mi radius (${inatTotal} obs · ${inatSpecies.length} species · nearest first${inatErr})\n`;
-    if (inatSpecies.length) {
-      inatSpecies.forEach(({ o, oLat, oLng, d }) => {
-        const common = o.taxon?.preferred_common_name || o.taxon?.name || 'Unknown';
-        const sci    = o.taxon?.name ?? '';
-        const label  = sci && sci !== common ? `${common} (${sci})` : common;
-        const when   = timeSince(o.observed_on || o.time_observed_at);
-        const dist   = o.obscured ? ' | ~obscured' : locLabel(userLat, userLng, oLat, oLng);
-        const place  = o.place_guess ? ` (${o.place_guess})` : '';
-        text += `• ${label} — ${when}${dist}${place}\n`;
+    text += `🦋 iNaturalist – last 7d, 30mi radius (${inatTotal} obs · ${inatShown.length} shown · nearest first${limitNote}${inatErr})\n`;
+    if (inatShown.length) {
+      inatShown.forEach(({ o, oLat, oLng }) => {
+        const common   = o.taxon?.preferred_common_name || o.taxon?.name || 'Unknown';
+        const sci      = o.taxon?.name ?? '';
+        const label    = sci && sci !== common ? `${common} (${sci})` : common;
+        const when     = timeSince(o.observed_on || o.time_observed_at);
+        const dist     = o.obscured ? ' | ~obscured' : locLabel(userLat, userLng, oLat, oLng);
+        const place    = o.place_guess ? ` (${o.place_guess})` : '';
+        const observer = o.user?.name || o.user?.login;
+        const who      = observer ? ` [@${observer}]` : '';
+        text += `• ${label} — ${when}${dist}${place}${who}\n`;
       });
     } else {
-      text += `• ${inatRes.status === 'rejected' ? 'Fetch failed' : 'No observations found'}\n`;
+      text += `• ${inatPage1.status === 'rejected' ? 'Fetch failed' : 'No observations found'}\n`;
     }
 
     text += '\n';
 
+    // eBird — notable always all; recent limited by maxEbird
     const ebirdRecent  = recentRes.status  === 'fulfilled' && Array.isArray(recentRes.value)  ? recentRes.value  : [];
     const ebirdNotable = notableRes.status === 'fulfilled' && Array.isArray(notableRes.value) ? notableRes.value : [];
     const notableCodes = new Set(ebirdNotable.map(o => o.speciesCode));
@@ -504,11 +524,13 @@ async function loadNearbyBirds() {
       (notableCodes.has(b.speciesCode) ? 1 : 0) - (notableCodes.has(a.speciesCode) ? 1 : 0)
       || (a.comName ?? '').localeCompare(b.comName ?? '')
     );
+    const ebirdShown   = maxEbird > 0 ? combined.slice(0, maxEbird) : combined;
+    const ebirdLimitNote = maxEbird > 0 && combined.length > maxEbird ? ` · showing ${maxEbird}` : '';
 
     const ebirdFail = recentRes.status === 'rejected' ? ` ⚠️ ${recentRes.reason}` : '';
-    text += `🐦 eBird – last 7d, ~30mi radius (${combined.length} species, ${ebirdNotable.length} notable${ebirdFail})\n`;
-    if (combined.length) {
-      combined.forEach(o => {
+    text += `🐦 eBird – last 7d, ~30mi radius (${combined.length} entries, ${ebirdNotable.length} notable${ebirdLimitNote}${ebirdFail})\n`;
+    if (ebirdShown.length) {
+      ebirdShown.forEach(o => {
         const name   = o.comName || o.sciName || 'Unknown';
         const count  = o.howMany ? ` — ${o.howMany} seen` : '';
         const dist   = locLabel(userLat, userLng, o.lat, o.lng);
@@ -598,6 +620,17 @@ loadBirdsBtn.addEventListener('click', loadNearbyBirds);
 
 buildToggles();
 buildPanels();
+
+// Restore and persist load-config inputs
+(function initLoadConfig() {
+  const inatEl  = document.getElementById('cfg-max-inat');
+  const ebirdEl = document.getElementById('cfg-max-ebird');
+  const saved   = k => localStorage.getItem(k);
+  if (saved('infer-max-inat'))  inatEl.value  = saved('infer-max-inat');
+  if (saved('infer-max-ebird')) ebirdEl.value = saved('infer-max-ebird');
+  inatEl.addEventListener('input',  () => localStorage.setItem('infer-max-inat',  inatEl.value));
+  ebirdEl.addEventListener('input', () => localStorage.setItem('infer-max-ebird', ebirdEl.value));
+})();
 
 // Populate API key inputs from server env vars
 fetch('/api/infer-keys').then(r => r.ok ? r.json() : {}).then(k => {

@@ -102,6 +102,13 @@
     #context-area { padding: 8px 14px; border-bottom: 1px solid var(--border-2); background: var(--bg-ph); }
     #ctx-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
     #ctx-label { font-size: 10px; color: var(--text-dim); letter-spacing: .07em; text-transform: uppercase; font-weight: 600; }
+    #ctx-config { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; flex-wrap: wrap; }
+    .ctx-cfg-label { font-size: 10px; color: var(--text-faint); white-space: nowrap; }
+    .ctx-cfg-hint  { font-size: 10px; color: var(--text-faint); font-style: italic; }
+    .cfg-input { width: 64px; font-size: 11px; font-family: ui-monospace, monospace;
+                 padding: 3px 7px; border-radius: 8px; border: 1px solid var(--border);
+                 background: var(--bg-input); color: var(--text); outline: none; }
+    .cfg-input:focus { border-color: var(--accent); }
     #load-birds-btn { font-size: 11px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border);
                       background: transparent; color: var(--text-dim); cursor: pointer; display: flex; align-items: center; gap: 4px; }
     #load-birds-btn:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
@@ -271,6 +278,13 @@
     <div id="ctx-header">
       <span id="ctx-label">Context (eBird / iNat / life list)</span>
       <button id="load-birds-btn">📍 Load nearby birds</button>
+    </div>
+    <div id="ctx-config">
+      <span class="ctx-cfg-label">Max iNat obs</span>
+      <input id="cfg-max-inat" class="cfg-input" type="number" min="0" placeholder="all">
+      <span class="ctx-cfg-label">Max eBird</span>
+      <input id="cfg-max-ebird" class="cfg-input" type="number" min="0" placeholder="all">
+      <span class="ctx-cfg-hint">notable always unlimited</span>
     </div>
     <textarea id="context-input" placeholder="Paste observation context — or tap 📍 to auto-load nearby birds from iNat + eBird…"></textarea>
   </div>
