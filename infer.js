@@ -446,9 +446,9 @@ async function loadNearbyBirds() {
     const [inatRes, recentRes, notableRes] = await Promise.allSettled([
       fetch(`https://api.inaturalist.org/v1/observations?taxon_id=3&lat=${lat}&lng=${lng}&radius=${INAT_KM}&per_page=200&order_by=observed_on&d1=${d1}`)
         .then(r => r.ok ? r.json() : Promise.reject('iNat ' + r.status)),
-      fetch(`https://nam.charleslogic.com/nam/ebird_proxy.php?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=200&mode=recent`)
+      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=200&mode=recent`)
         .then(r => r.ok ? r.json() : Promise.reject('eBird recent ' + r.status)),
-      fetch(`https://nam.charleslogic.com/nam/ebird_proxy.php?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=200&mode=notable`)
+      fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${EBIRD_KM}&back=7&maxResults=200&mode=notable`)
         .then(r => r.ok ? r.json() : Promise.reject('eBird notable ' + r.status)),
     ]);
 
