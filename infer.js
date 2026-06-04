@@ -515,10 +515,11 @@ async function loadNearbyBirds() {
     const ebirdNotable = notableRes.status === 'fulfilled' && Array.isArray(notableRes.value) ? notableRes.value : [];
     const notableCodes = new Set(ebirdNotable.map(o => o.speciesCode));
 
-    const recentCodes = new Set(ebirdRecent.map(o => o.speciesCode));
+    // Dedup by subId+speciesCode: same checklist entry in both recent and notable counts once
+    const recentKeys = new Set(ebirdRecent.map(o => `${o.subId}|${o.speciesCode}`));
     const combined = [
       ...ebirdRecent,
-      ...ebirdNotable.filter(o => !recentCodes.has(o.speciesCode)),
+      ...ebirdNotable.filter(o => !recentKeys.has(`${o.subId}|${o.speciesCode}`)),
     ];
     combined.sort((a, b) =>
       (notableCodes.has(b.speciesCode) ? 1 : 0) - (notableCodes.has(a.speciesCode) ? 1 : 0)
