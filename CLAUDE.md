@@ -75,6 +75,7 @@ All apps are public (no login required to see the cards):
 | TrackLog | `tracks.charleslogic.com` | `tracklog-icon.svg` |
 | Worry Meter | `wm.charleslogic.com` | `wm-icon.svg` |
 | Infer | `charleslogic.com/infer.html` | `infer-icon.svg` |
+| CompAI | `compai.charleslogic.com` | `compai-icon.svg` |
 
 **When adding a new app:** copy its SVG icon into this repo, add an `<img class="nav-card-icon">` card in `index.html`, and add the icon path to the `PRECACHE` list in `sw.js`.
 
