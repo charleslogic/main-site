@@ -68,6 +68,7 @@ All apps are public (no login required to see the cards):
 | Annoyed | `annoyed.charleslogic.com` | `annoyed-icon.svg` |
 | Ground Truth | `gt.charleslogic.com` | `gt-icon.svg` |
 | Debate! | `debate.charleslogic.com` | `debate-icon.svg` |
+| TXparcel | `txparcel.charleslogic.com` | `txparcel-icon.svg` |
 
 **When adding a new app:** copy its SVG icon into this repo, add an `<img class="nav-card-icon">` card in `index.html`, and add the icon path to the `PRECACHE` list in `sw.js`.
 
