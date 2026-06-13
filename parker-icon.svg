@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="pc-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#0a1628"/>
+    </linearGradient>
+    <linearGradient id="pc-shoe" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f4d35e"/>
+      <stop offset="100%" stop-color="#b8860b"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="url(#pc-bg)"/>
+  <!-- Horseshoe -->
+  <path d="M 32 36 A 18 18 0 0 1 68 36" stroke="url(#pc-shoe)" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <circle cx="33.1" cy="29.8" r="2" fill="#0a1628"/>
+  <circle cx="39.7" cy="21.3" r="2" fill="#0a1628"/>
+  <circle cx="60.3" cy="21.3" r="2" fill="#0a1628"/>
+  <circle cx="66.9" cy="29.8" r="2" fill="#0a1628"/>
+  <!-- GPS pin marking a parcel -->
+  <circle cx="50" cy="62" r="12" fill="#ffffff"/>
+  <circle cx="50" cy="62" r="5" fill="#0a1628"/>
+  <polygon points="43,71 50,87 57,71" fill="#ffffff"/>
+  <ellipse cx="50" cy="87" rx="7" ry="2.5" fill="#ffffff"/>
+</svg>
